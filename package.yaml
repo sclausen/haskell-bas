@@ -21,22 +21,26 @@ description:         Please see the README on Github at <https://github.com/gith
 
 dependencies:
 - base >= 4.7 && < 5
+- ansi-wl-pprint
 - brick
 - bytestring
+- clock
 - filepath
 - fsnotify
-- vty
 - haskeline
 - microlens
 - microlens-th
 - mtl
 - options
-- text
-- ansi-wl-pprint
-- yaml
 - sqlite-simple
+- text
+- vty
+- yaml
 library:
   source-dirs: src
+  ghc-options:
+  - -Wall
+  - -Werror
 
 executables:
   haskell-bas:
@@ -46,6 +50,8 @@ executables:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
+    - -Wall
+    - -Werror
     dependencies:
     - haskell-bas
 
@@ -57,5 +63,7 @@ tests:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
+    - -Wall
+    - -Werror
     dependencies:
     - haskell-bas
