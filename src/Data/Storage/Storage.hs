@@ -12,7 +12,7 @@ data Storage = Storage
   { _conn      :: MVar Connection
   , _fetchUser :: String
                -> IO (Maybe User)
-  , _incDepts  :: String
+  , _incDebts  :: String
                -> Float
                -> IO ()
   }
@@ -25,10 +25,10 @@ newStorage = do
   pure Storage {
     _conn = mVarConn
   , _fetchUser = fetchUser mVarConn
-  , _incDepts = incDepts mVarConn
+  , _incDebts = incDebts mVarConn
   }
 
 initialize :: Connection
            -> IO ()
-initialize conn = execute_ conn "CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY, username TEXT unique, public_key TEXT, depts FLOAT)"
+initialize conn = execute_ conn "CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY, username TEXT unique, public_key TEXT, debts FLOAT)"
 
