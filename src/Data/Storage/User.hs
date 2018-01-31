@@ -1,5 +1,4 @@
 {-# LANGUAGE BangPatterns      #-}
-{-# LANGUAGE OverloadedLabels  #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -funbox-strict-fields #-}
 module Data.Storage.User (
@@ -24,10 +23,10 @@ instance FromRow User where
 fetchUser :: MVar Connection
           -> String
           -> IO (Maybe User)
-fetchUser mVarConn username = withMVar mVarConn $ queryDb `flip` username
+fetchUser mVarConn username = withMVar mVarConn $ queryDb
   where
-    queryDb conn' username' = do
-      users <-  query conn' "SELECT id, username, public_key, debts from user WHERE username = ?" [username'] :: IO [User]
+    queryDb conn = do
+      users <-  query conn "SELECT id, username, public_key, debts from user WHERE username = ?" [username] :: IO [User]
       case users of
         []      -> pure Nothing
         [!user] -> pure $ Just user
