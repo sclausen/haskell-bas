@@ -32,12 +32,36 @@ newStorage = do
 
 initialize :: Connection
            -> IO ()
-initialize conn = execute_ conn $ [r|
-CREATE TABLE IF NOT EXISTS user
-(
-   id         INTEGER PRIMARY KEY,
-   username   TEXT UNIQUE,
-   public_key TEXT,
-   debts      REAL
-)
-|]
+initialize conn = do
+   createUserTable
+   createStockTable
+   createPurchaseTable
+    where
+      createUserTable = execute_ conn $ [r|
+        CREATE TABLE IF NOT EXISTS user
+        (
+          id         INTEGER PRIMARY KEY,
+          username   TEXT UNIQUE,
+          public_key TEXT,
+          debts      REAL
+        )
+        |]
+      createStockTable = execute_ conn $ [r|
+        CREATE TABLE IF NOT EXISTS stock
+        (
+          id         INTEGER PRIMARY KEY,
+          label      TEXT UNIQUE,
+          price      REAL
+        )
+        |]
+      createPurchaseTable = execute_ conn $ [r|
+        CREATE TABLE IF NOT EXISTS purchase
+        (
+          id         INTEGER PRIMARY KEY,
+          userId     INTEGER,
+          stockId    INTEGER,
+          boughtAt   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY(userId) REFERENCES user (id) ON DELETE CASCADE,
+          FOREIGN KEY(stockId) REFERENCES  stock (id) ON DELETE CASCADE
+        )
+        |]
