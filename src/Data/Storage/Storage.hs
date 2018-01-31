@@ -26,7 +26,6 @@ newStorage = do
     _conn = mVarConn
   , _fetchUser = fetchUser mVarConn
   , _incDepts = incDepts mVarConn
-  , _decDepts = decDepts mVarConn
   }
 
 initialize :: Connection
