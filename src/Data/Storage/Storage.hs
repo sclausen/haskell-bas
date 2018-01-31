@@ -6,17 +6,22 @@ module Data.Storage.Storage (
 ) where
 
 import           Control.Concurrent.MVar
+import           Data.Storage.Stock
 import           Data.Storage.User
 import           Database.SQLite.Simple
 import           Text.RawString.QQ
 
 data Storage = Storage
-  { _conn      :: MVar Connection
-  , _fetchUser :: String
-               -> IO (Maybe User)
-  , _incDebts  :: String
-               -> Float
-               -> IO ()
+  { _conn              :: MVar Connection
+  , _fetchUser         :: String
+                       -> IO (Maybe User)
+  , _incUserDebts      :: String
+                       -> Float
+                       -> IO ()
+  , _fetchStocks       :: IO [Stock]
+  , _decStockAmount    :: Int
+                       -> Int
+                       -> IO ()
   }
 
 newStorage :: IO Storage
@@ -27,7 +32,9 @@ newStorage = do
   pure Storage {
     _conn = mVarConn
   , _fetchUser = fetchUser mVarConn
-  , _incDebts = incDebts mVarConn
+  , _incUserDebts = incUserDebts mVarConn
+  , _fetchStocks = fetchStocks mVarConn
+  , _decStockAmount = decStockAmount mVarConn
   }
 
 initialize :: Connection
@@ -41,25 +48,26 @@ initialize conn = do
         CREATE TABLE IF NOT EXISTS user
         (
           id         INTEGER PRIMARY KEY,
-          username   TEXT UNIQUE,
-          public_key TEXT,
-          debts      REAL
+          username   TEXT NOT NULL UNIQUE,
+          publicKey  TEXT NOT NULL,
+          debts      REAL NOT NULL
         )
         |]
       createStockTable = execute_ conn $ [r|
         CREATE TABLE IF NOT EXISTS stock
         (
           id         INTEGER PRIMARY KEY,
-          label      TEXT UNIQUE,
-          price      REAL
+          label      TEXT NOT NULL UNIQUE,
+          price      REAL NOT NULL,
+          amount     INTEGER NOT NULL
         )
         |]
       createPurchaseTable = execute_ conn $ [r|
         CREATE TABLE IF NOT EXISTS purchase
         (
           id         INTEGER PRIMARY KEY,
-          userId     INTEGER,
-          stockId    INTEGER,
+          userId     INTEGER NOT NULL,
+          stockId    INTEGER NOT NULL,
           boughtAt   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY(userId) REFERENCES user (id) ON DELETE CASCADE,
           FOREIGN KEY(stockId) REFERENCES  stock (id) ON DELETE CASCADE
