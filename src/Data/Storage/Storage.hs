@@ -30,5 +30,5 @@ newStorage = do
 
 initialize :: Connection
            -> IO ()
-initialize conn = execute_ conn "CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY, username TEXT unique, public_key TEXT, debts FLOAT)"
+initialize conn = execute_ conn "CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY, username TEXT unique, public_key TEXT, debts REAL)"
 
