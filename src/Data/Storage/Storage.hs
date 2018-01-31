@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes       #-}
 module Data.Storage.Storage (
     Storage (..)
   , newStorage
@@ -7,6 +8,7 @@ module Data.Storage.Storage (
 import           Control.Concurrent.MVar
 import           Data.Storage.User
 import           Database.SQLite.Simple
+import           Text.RawString.QQ
 
 data Storage = Storage
   { _conn      :: MVar Connection
@@ -30,5 +32,12 @@ newStorage = do
 
 initialize :: Connection
            -> IO ()
-initialize conn = execute_ conn "CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY, username TEXT unique, public_key TEXT, debts REAL)"
-
+initialize conn = execute_ conn $ [r|
+CREATE TABLE IF NOT EXISTS user
+(
+   id         INTEGER PRIMARY KEY,
+   username   TEXT UNIQUE,
+   public_key TEXT,
+   debts      REAL
+)
+|]
