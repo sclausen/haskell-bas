@@ -32,7 +32,6 @@ dependencies:
 - microlens-th
 - mtl
 - options
-- raw-strings-qq 
 - sqlite-simple
 - text
 - vty
