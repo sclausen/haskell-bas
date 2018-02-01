@@ -14,17 +14,17 @@ import           Database.SQLite.Simple
 type StockId = Int
 
 data Stock = Stock
-  { _id     :: !StockId
-  , _label  :: String
-  , _price  :: !Float
-  , _amount :: !Int
+  { _stockId :: !StockId
+  , _label   :: String
+  , _price   :: !Float
+  , _amount  :: !Int
   } deriving (Show)
 
 instance FromRow Stock where
   fromRow = Stock <$> field <*> field <*> field <*> field
 
 fetchStocks :: MVar Connection -> IO [Stock]
-fetchStocks mVarConn = withMVar mVarConn $ query_ `flip` "SELECT id, label, price, amount FROM stock ORDER BY label ASC WHERE amount > 0" :: IO [Stock]
+fetchStocks mVarConn = withMVar mVarConn $ query_ `flip` "SELECT id, label, price, amount FROM stock WHERE amount > 0 ORDER BY label ASC" :: IO [Stock]
 
 fetchStock :: MVar Connection -> StockId -> IO (Maybe Stock)
 fetchStock mVarConn stockId = do
