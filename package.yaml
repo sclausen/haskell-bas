@@ -22,20 +22,10 @@ description:         Please see the README on Github at <https://github.com/gith
 dependencies:
 - base >= 4.7 && < 5
 - ansi-wl-pprint
-- brick
-- bytestring
 - clock
-- filepath
-- fsnotify
 - haskeline
-- microlens
-- microlens-th
 - mtl
-- options
 - sqlite-simple
-- text
-- vty
-- yaml
 library:
   source-dirs: src
   ghc-options:

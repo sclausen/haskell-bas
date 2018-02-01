@@ -5,13 +5,15 @@ module Repl (
   , appSettings
   , process
   , repl
+  , printMore
   )
   where
 
-import           Control.Monad.Trans
+import           Control.Monad.Trans          (liftIO)
 import           Data.List
 import           System.Console.Haskeline
 import           System.Exit
+import qualified Text.PrettyPrint.ANSI.Leijen as PP
 
 type Repl a = InputT IO a
 
@@ -22,7 +24,7 @@ appSettings = (defaultSettings :: Settings IO)
   }
 
 keywords :: [String]
-keywords = ["stocks", "buy", "me"]
+keywords = ["stocks", "buy", "me", "purchases"]
 
 search :: String -> [Completion]
 search str = map simpleCompletion $ filter (str `isPrefixOf`) keywords
@@ -46,3 +48,6 @@ repl = do
   case minput of
     Nothing    -> outputStrLn "This should not happen."
     Just input -> liftIO (process input) >> repl
+
+printMore :: Double -> IO()
+printMore percentage = print $ PP.black $ PP.ondullwhite $ PP.text ("--More--(" ++ show percentage ++ "%) ")

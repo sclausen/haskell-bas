@@ -14,7 +14,7 @@ data Storage = Storage
   , _fetchUser      :: String -> IO (Maybe User)
   , _incUserDebts   :: String -> Float -> IO ()
   , _fetchStocks    :: IO [Stock]
-  , _decStockAmount :: Int -> Int -> IO (Either String ())
+  , _decStockAmount :: StockId -> Int -> IO (Either String ())
   }
 
 newStorage :: IO Storage

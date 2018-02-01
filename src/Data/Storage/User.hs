@@ -3,6 +3,7 @@
 {-# OPTIONS_GHC -funbox-strict-fields #-}
 module Data.Storage.User (
     User (..)
+  , UserId
   , fetchUser
   , incUserDebts
 ) where
@@ -10,9 +11,12 @@ module Data.Storage.User (
 import           Control.Concurrent.MVar
 import           Database.SQLite.Simple
 
+type UserId = Int
+type Username = String
+
 data User = User
-  { _id        :: !Int
-  , _username  :: String
+  { _id        :: !UserId
+  , _username  :: Username
   , _publicKey :: String
   , _debts     :: !Float
   } deriving (Show)
@@ -30,5 +34,5 @@ fetchUser mVarConn username = withMVar mVarConn $ queryDb
         [!user] -> pure $ Just user
         (_:_)   -> pure Nothing -- Should never happen, since the username is a primary key
 
-incUserDebts :: MVar Connection -> String -> Float -> IO ()
+incUserDebts :: MVar Connection -> Username -> Float -> IO ()
 incUserDebts mVarConn username summand = withMVar mVarConn $ \conn -> execute conn "UPDATE user SET debts = debts + ? WHERE username = ?" (summand, username)
