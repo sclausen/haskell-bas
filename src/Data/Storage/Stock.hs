@@ -20,7 +20,16 @@ instance FromRow Stock where
   fromRow = Stock <$> field <*> field <*> field <*> field
 
 fetchStocks :: MVar Connection -> IO [Stock]
-fetchStocks mVarConn = withMVar mVarConn $ query_ `flip` "SELECT id, label, price, amount FROM stock ORDER BY label ASC" :: IO [Stock]
+fetchStocks mVarConn = withMVar mVarConn $ query_ `flip` "SELECT id, label, price, amount FROM stock ORDER BY label ASC WHERE amount > 0" :: IO [Stock]
 
-decStockAmount :: MVar Connection -> Int -> Int -> IO ()
-decStockAmount mVarConn stockId subtrahend = withMVar mVarConn $ \conn -> execute conn "UPDATE stock SET amount = amount - ? WHERE id = ?" (subtrahend, stockId)
+decStockAmount :: MVar Connection -> Int -> Int -> IO (Either String ())
+decStockAmount mVarConn stockId subtrahend = withMVar mVarConn $ \conn -> do
+  execute conn "UPDATE stock SET amount = amount - ? WHERE id = ? AND amount > 0" (subtrahend, stockId)
+  affectedRows <- changes conn
+  if affectedRows == 0
+    then pure $ Left "Jemand anderes war leider schneller :'("
+    else pure $ Right ()
+
+
+
+
