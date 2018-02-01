@@ -3,6 +3,7 @@
 module Data.Storage.Stock (
     Stock (..)
   , StockId
+  , fetchStock
   , fetchStocks
   , decStockAmount
 ) where
@@ -25,14 +26,18 @@ instance FromRow Stock where
 fetchStocks :: MVar Connection -> IO [Stock]
 fetchStocks mVarConn = withMVar mVarConn $ query_ `flip` "SELECT id, label, price, amount FROM stock ORDER BY label ASC WHERE amount > 0" :: IO [Stock]
 
-decStockAmount :: MVar Connection -> StockId -> Int -> IO (Either String ())
-decStockAmount mVarConn stockId subtrahend = withMVar mVarConn $ \conn -> do
-  execute conn "UPDATE stock SET amount = amount - ? WHERE id = ? AND amount > 0" (subtrahend, stockId)
+fetchStock :: MVar Connection -> StockId -> IO (Maybe Stock)
+fetchStock mVarConn stockId = do
+  stocks <- withMVar mVarConn $ \conn-> query conn "SELECT id, label, price, amount FROM stock WHERE id = ?" [stockId] :: IO [Stock]
+  case stocks of
+    [stock] -> pure $ Just stock
+    []      -> pure Nothing
+    (_:_)   -> pure Nothing -- should not happen, since the id is unique
+
+decStockAmount :: MVar Connection -> StockId -> IO (Either String ())
+decStockAmount mVarConn stockId = withMVar mVarConn $ \conn -> do
+  execute conn "UPDATE stock SET amount = amount - 1 WHERE id = ? AND amount > 0" [stockId]
   affectedRows <- changes conn
   if affectedRows == 0
     then pure $ Left "Jemand anderes war leider schneller :'("
     else pure $ Right ()
-
-
-
-

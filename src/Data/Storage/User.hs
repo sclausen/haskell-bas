@@ -34,5 +34,5 @@ fetchUser mVarConn username = withMVar mVarConn $ queryDb
         [!user] -> pure $ Just user
         (_:_)   -> pure Nothing -- Should never happen, since the username is a primary key
 
-incUserDebts :: MVar Connection -> Username -> Float -> IO ()
-incUserDebts mVarConn username summand = withMVar mVarConn $ \conn -> execute conn "UPDATE user SET debts = debts + ? WHERE username = ?" (summand, username)
+incUserDebts :: MVar Connection -> UserId -> Float -> IO ()
+incUserDebts mVarConn userId summand = withMVar mVarConn $ \conn -> execute conn "UPDATE user SET debts = debts + ? WHERE id = ?" (summand, userId)

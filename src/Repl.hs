@@ -40,7 +40,7 @@ process s
   | s `elem` ["q", "quit", "exit"] = exitSuccess
   | otherwise                      = putStr helpText
   where
-    helpText = "help text\n"
+    helpText = show $  PP.black $ PP.ondullwhite $ PP.text "help text" PP.<$> PP.softbreak
 
 repl :: Repl ()
 repl = do
