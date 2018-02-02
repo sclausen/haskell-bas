@@ -39,6 +39,6 @@ decStockAmount mVarConn stockId = withMVar mVarConn $ \conn -> do
   execute conn "UPDATE stock SET amount = amount - 1 WHERE id = ? AND amount > 0" [stockId]
   affectedRows <- changes conn
   if affectedRows == 0
-    then pure $ Left "Jemand anderes war leider schneller :'("
+    then pure $ Left "By now the stock has already been depleted!"
     else pure $ Right ()
 

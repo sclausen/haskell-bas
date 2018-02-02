@@ -116,7 +116,7 @@ buy storage =
                         Just u -> do
                           void $ swapMVar (_currentUser storage) u
                           putStrLn $ "You've bought one item of the stock \""++ _label stock ++ "\" for " ++ printf "%.2f€" (_price stock) ++"."
-                    Nothing -> putStrLn ("Something weird happened, Ladies and Gentlemen!" :: String)
+                    Nothing -> putStrLn ("Checking if the stock exists should've been done before, so you will probably never see this error message." :: String)
   where
     readStockId :: String -> StockId
     readStockId = read
