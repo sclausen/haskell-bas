@@ -1,4 +1,5 @@
 {-# OPTIONS_GHC -funbox-strict-fields #-}
+{-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 module Data.Storage.Stock (
     Stock (..)
@@ -34,11 +35,12 @@ fetchStock mVarConn stockId = do
     []      -> pure Nothing
     (_:_)   -> pure Nothing -- should not happen, since the id is unique
 
-decStockAmount :: MVar Connection -> StockId -> IO (Either String ())
+decStockAmount :: MVar Connection -> StockId -> IO (Either String Stock)
 decStockAmount mVarConn stockId = withMVar mVarConn $ \conn -> do
   execute conn "UPDATE stock SET amount = amount - 1 WHERE id = ? AND amount > 0" [stockId]
   affectedRows <- changes conn
   if affectedRows == 0
     then pure $ Left "By now the stock has already been depleted!"
-    else pure $ Right ()
-
+    else query conn "SELECT id, label, price, amount FROM stock WHERE id = ?" [stockId] >>= \case
+        [stock] -> pure $ Right stock
+        _       -> pure $ Left "fetching failed"

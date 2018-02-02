@@ -105,9 +105,7 @@ buy storage =
               let stockId = readStockId input
               _decStockAmount storage stockId >>= \case
                 Left _ -> putStrLn ("No Stock exists under the StockId " ++ show stockId :: String)
-                Right _ ->
-                  _fetchStock storage stockId >>= \case
-                    Just stock -> do
+                Right stock -> do
                       let userId = _userId user
                       _incUserDebts storage userId (_price stock)
                       _addPurchase storage userId stockId
@@ -115,8 +113,7 @@ buy storage =
                         Nothing   -> putStrLn "The user has been deleted"
                         Just u -> do
                           void $ swapMVar (_currentUser storage) u
-                          putStrLn $ "You've bought one item of the stock \""++ _label stock ++ "\" for " ++ printf "%.2f€" (_price stock) ++"."
-                    Nothing -> putStrLn ("Checking if the stock exists should've been done before, so you will probably never see this error message." :: String)
+                          putStrLn $ "You've bought one item of the stock \""++ _label stock ++ "\" for " ++ printf "%.2f€" (_price stock) ++ "."
   where
     readStockId :: String -> StockId
     readStockId = read

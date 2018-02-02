@@ -15,7 +15,7 @@ data Storage = Storage
   { _conn           :: MVar Connection
   , _addPurchase    :: UserId -> StockId -> IO ()
   , _currentUser    :: MVar User
-  , _decStockAmount :: StockId -> IO (Either String ())
+  , _decStockAmount :: StockId -> IO (Either String Stock)
   , _fetchPurchases :: Int -> Int -> IO [Purchase]
   , _fetchStock     :: StockId -> IO (Maybe Stock)
   , _fetchStocks    :: IO [Stock]
