@@ -38,8 +38,6 @@ search str = map simpleCompletion $ filter (str `isPrefixOf`) keywords
 process :: String -> Storage -> IO ()
 process s storage
   | s == "" = return ()
-  -- | s == "stocks" = do
-  --   _storage
   | "buy" `isPrefixOf` s           = buy storage s
   | s == "stocks"                  = stocks storage
   | s == "purchases"               = purchases storage
