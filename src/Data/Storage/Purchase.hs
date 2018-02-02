@@ -5,7 +5,6 @@ module Data.Storage.Purchase (
   , addPurchase
   , fetchPurchases
   , prettyPrintPurchase
-  , prettyPrintPurchase'
 ) where
 
 import           Control.Concurrent.MVar
@@ -46,13 +45,3 @@ prettyPrintPurchase ps = do
     PP.fill 6 (PP.text $ printf "%.2f€" $ _sPrice p) PP.<+>
     PP.fill 23 (PP.text $ show $ _boughtAt p)
     ) ps
-
-prettyPrintPurchase' :: [Purchase] -> String
-prettyPrintPurchase' ps = show $ PP.vcat $ headerRow:purchaseRows
-  where
-    headerRow = PP.black $ PP.ondullwhite $ PP.fill 15 (PP.text "Product") PP.<+> PP.fill 6 (PP.text "Price") PP.<+> PP.fill 23 (PP.text "Date")
-    purchaseRows = fmap (\p ->
-      PP.fill 15 (PP.text $ _stockLabel p) PP.<+>
-      PP.fill 6 (PP.text $ printf "%.2f€" $ _sPrice p) PP.<+>
-      PP.fill 23 (PP.text $ show $ _boughtAt p)
-      ) ps

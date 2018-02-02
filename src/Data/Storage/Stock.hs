@@ -7,7 +7,6 @@ module Data.Storage.Stock (
   , fetchStocks
   , decStockAmount
   , prettyPrintStocks
-  , prettyPrintStocks'
 ) where
 
 import           Control.Concurrent.MVar
@@ -55,14 +54,3 @@ prettyPrintStocks ss = do
     PP.fill 6 (PP.text $ printf "%.2f€" $ _price s) PP.<+>
     PP.fill 5 (PP.int $ _amount s)
     ) ss
-
-prettyPrintStocks' :: [Stock] -> String
-prettyPrintStocks' ss = show $ PP.vcat $ headerRow:stockRows
-  where
-    headerRow = PP.black $ PP.ondullwhite $ PP.fill 5 (PP.text "ID") PP.<+> PP.fill 15 (PP.text "Label") PP.<+> PP.fill 6 (PP.text "Price") PP.<+> PP.fill 5 (PP.text "Amount")
-    stockRows = fmap (\s ->
-      PP.fill 5 (PP.int $ _stockId s) PP.<+>
-      PP.fill 15 (PP.text $ _label s) PP.<+>
-      PP.fill 6 (PP.text $ printf "%.2f€" $ _price s) PP.<+>
-      PP.fill 5 (PP.int $ _amount s)
-      ) ss

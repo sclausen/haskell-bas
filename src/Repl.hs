@@ -42,11 +42,11 @@ process :: String -> Storage -> Repl ()
 process s storage
   | s == "" = return ()
   | s =="buy"                      = buy storage
-  | s == "stocks"                  = stocks storage
-  | s == "purchases"               = purchases storage
-  | s == "me"                      = me storage
+  | s == "stocks"                  = liftIO $ stocks storage
+  | s == "purchases"               = liftIO $ purchases storage
+  | s == "me"                      = liftIO $ me storage
   | s == "login"                   = login storage
-  | s == "logout"                  = logout storage
+  | s == "logout"                  = liftIO $ logout storage
   | s `elem` ["q", "quit", "exit"] = liftIO exitSuccess
   | otherwise                      = outputStr helpText
   where
@@ -68,33 +68,33 @@ login storage = do
   lift (isEmptyMVar currentUser) >>= \case
     False -> outputStrLn "You're already logged in"
     True -> getInputLine "Please enter a username: " >>= \case
-      Nothing -> outputStrLn "Fuck!"
-      Just username -> lift (_fetchUser storage username) >>= \case
-        Nothing -> outputStrLn "This user doesn't exist!"
-        Just user -> lift (putMVar (_currentUser storage) user) >> outputStrLn "Successfully logged in!"
+      Nothing -> outputStrLn "Never heard of really empty input…"
+      Just username -> lift (_fetchUser storage username >>= \case
+        Nothing -> putStrLn "This user doesn't exist!"
+        Just user -> putMVar (_currentUser storage) user >> putStrLn "Successfully logged in!")
 
-logout :: Storage -> Repl ()
+logout :: Storage -> IO ()
 logout storage = do
   let currentUser = _currentUser storage
-  lift (isEmptyMVar currentUser) >>= \case
-    True -> outputStrLn "You're not logged in"
-    False -> lift (takeMVar currentUser) >> outputStrLn "You've been successfully logged out!"
+  isEmptyMVar currentUser >>= \case
+    True -> putStrLn "You're not logged in"
+    False -> takeMVar currentUser >> putStrLn "You've been successfully logged out!"
 
-me :: Storage -> Repl ()
+me :: Storage -> IO ()
 me storage = do
   let currentUser = _currentUser storage
-  lift (isEmptyMVar currentUser) >>= \case
-    True -> outputStrLn "You're not logged in"
-    False -> lift (readMVar currentUser) >>= (\u-> outputStrLn $ "You're logged in as \"" ++ _username u ++ "\" and you're " ++ printf "%.2f€" (_debts u) ++ " in debt.")
+  isEmptyMVar currentUser >>= \case
+    True -> putStrLn "You're not logged in"
+    False -> readMVar currentUser >>= (\u-> putStrLn $ "You're logged in as \"" ++ _username u ++ "\" and you're " ++ printf "%.2f€" (_debts u) ++ " in debt.")
 
-purchases :: Storage -> Repl ()
+purchases :: Storage -> IO ()
 purchases storage =
-  lift (isEmptyMVar (_currentUser storage)) >>= \case
-    True -> outputStrLn "You're not logged in"
-    False -> outputStrLn . prettyPrintPurchase' =<< lift (_fetchPurchases storage 0 10)
+  isEmptyMVar (_currentUser storage) >>= \case
+    True -> putStrLn "You're not logged in"
+    False -> prettyPrintPurchase =<< _fetchPurchases storage 0 10
 
-stocks :: Storage -> Repl ()
-stocks storage = outputStrLn . prettyPrintStocks' =<< lift (_fetchStocks storage)
+stocks :: Storage -> IO ()
+stocks storage = prettyPrintStocks =<< _fetchStocks storage
 
 buy :: Storage -> Repl ()
 buy storage =
@@ -108,22 +108,22 @@ buy storage =
           mLine <- getInputLine "Please enter a StockId: "
           case mLine of
             Nothing -> outputStrLn "How can you enter nothing? Would be strange, wouldn't it?"
-            Just input -> do
+            Just input -> liftIO $ do
               let stockId = readStockId input
-              lift (_decStockAmount storage stockId) >>= \case
-                Left _ -> outputStrLn ("No Stock exists under the StockId " ++ show stockId :: String)
+              _decStockAmount storage stockId >>= \case
+                Left _ -> putStrLn ("No Stock exists under the StockId " ++ show stockId :: String)
                 Right _ ->
-                  lift (_fetchStock storage stockId) >>= \case
+                  _fetchStock storage stockId >>= \case
                     Just stock -> do
                       let userId = _userId user
-                      lift (_incUserDebts storage userId (_price stock))
-                      lift (_addPurchase storage userId stockId)
-                      lift (_fetchUser storage (_username currentUser)) >>= \case
-                        Nothing   -> outputStrLn "The user has been deleted"
+                      _incUserDebts storage userId (_price stock)
+                      _addPurchase storage userId stockId
+                      _fetchUser storage (_username currentUser) >>= \case
+                        Nothing   -> putStrLn "The user has been deleted"
                         Just u -> do
-                          lift $ void $ swapMVar (_currentUser storage) u
-                          outputStrLn $ "You've bought one item of the stock \""++ _label stock ++ "\" for " ++ printf "%.2f€" (_price stock) ++"."
-                    Nothing -> outputStrLn ("Something weird happened, Ladies and Gentlemen!" :: String)
+                          void $ swapMVar (_currentUser storage) u
+                          putStrLn $ "You've bought one item of the stock \""++ _label stock ++ "\" for " ++ printf "%.2f€" (_price stock) ++"."
+                    Nothing -> putStrLn ("Something weird happened, Ladies and Gentlemen!" :: String)
   where
     readStockId :: String -> StockId
     readStockId = read
