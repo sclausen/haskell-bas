@@ -4,7 +4,6 @@ module Data.Storage.Purchase (
     Purchase (..)
   , addPurchase
   , fetchPurchases
-  , prettyPrintPurchase
 ) where
 
 import           Control.Concurrent.MVar
@@ -12,8 +11,6 @@ import           Data.Storage.Stock
 import           Data.Storage.User
 import           Data.Time.Clock
 import           Database.SQLite.Simple
-import qualified Text.PrettyPrint.ANSI.Leijen as PP
-import           Text.Printf
 
 type PurchaseId = Int
 
@@ -36,12 +33,3 @@ fetchPurchases :: MVar Connection -> MVar User -> Int -> Int -> IO [Purchase]
 fetchPurchases mConn mUser offset limit = do
   user <- readMVar mUser
   withMVar mConn $ \conn -> query conn "SELECT purchase.id, userId, stockId, boughtAt, stock.price, stock.label FROM purchase LEFT JOIN stock ON stock.id = purchase.stockId WHERE userId = ? ORDER BY boughtAt DESC LIMIT ?, ?" (_userId user, offset, limit)
-
-prettyPrintPurchase :: [Purchase] -> IO ()
-prettyPrintPurchase ps = do
-  print $ PP.black $ PP.ondullwhite $ PP.fill 15 (PP.text "Product") PP.<+> PP.fill 6 (PP.text "Price") PP.<+> PP.fill 23 (PP.text "Date")
-  print $ PP.vcat $ fmap (\p ->
-    PP.fill 15 (PP.text $ _stockLabel p) PP.<+>
-    PP.fill 6 (PP.text $ printf "%.2f€" $ _sPrice p) PP.<+>
-    PP.fill 23 (PP.text $ show $ _boughtAt p)
-    ) ps

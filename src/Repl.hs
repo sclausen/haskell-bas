@@ -6,22 +6,20 @@ module Repl (
   , appSettings
   , process
   , repl
-  , printMore
   )
   where
 
 import           Control.Concurrent.MVar
 import           Control.Monad
-import           Control.Monad.Trans          (lift, liftIO)
+import           Control.Monad.Trans      (lift, liftIO)
 import           Data.Char
 import           Data.List
-import           Data.Storage.Purchase
 import           Data.Storage.Stock
 import           Data.Storage.Storage
 import           Data.Storage.User
+import           PrettyPrint
 import           System.Console.Haskeline
 import           System.Exit
-import qualified Text.PrettyPrint.ANSI.Leijen as PP
 import           Text.Printf
 
 type Repl a = InputT IO a
@@ -48,9 +46,7 @@ process s storage
   | s == "login"                   = login storage
   | s == "logout"                  = liftIO $ logout storage
   | s `elem` ["q", "quit", "exit"] = liftIO exitSuccess
-  | otherwise                      = outputStr helpText
-  where
-    helpText = show $ PP.black $ PP.ondullwhite $ PP.text "help text" PP.<$> PP.softbreak
+  | otherwise                      = return ()
 
 repl :: Storage -> Repl ()
 repl storage = do
@@ -58,9 +54,6 @@ repl storage = do
   case minput of
     Nothing    -> outputStrLn "This should not happen."
     Just input -> process (trim input) storage >> repl storage
-
-printMore :: Double -> IO()
-printMore percentage = print $ PP.black $ PP.ondullwhite $ PP.text ("--More--(" ++ show percentage ++ "%) ")
 
 login :: Storage -> Repl ()
 login storage = do
