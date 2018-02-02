@@ -41,7 +41,7 @@ search str = map simpleCompletion $ filter (str `isPrefixOf`) keywords
 process :: String -> Storage -> Repl ()
 process s storage
   | s == "" = return ()
-  | s =="buy"                      = buy storage
+  | s == "buy"                     = buy storage
   | s == "stocks"                  = liftIO $ stocks storage
   | s == "purchases"               = liftIO $ purchases storage
   | s == "me"                      = liftIO $ me storage
@@ -50,7 +50,7 @@ process s storage
   | s `elem` ["q", "quit", "exit"] = liftIO exitSuccess
   | otherwise                      = outputStr helpText
   where
-    helpText = show $  PP.black $ PP.ondullwhite $ PP.text "help text" PP.<$> PP.softbreak
+    helpText = show $ PP.black $ PP.ondullwhite $ PP.text "help text" PP.<$> PP.softbreak
 
 repl :: Storage -> Repl ()
 repl storage = do
@@ -101,7 +101,7 @@ buy storage =
   lift (isEmptyMVar (_currentUser storage)) >>= \case
     True -> outputStrLn "You're not logged in"
     False -> do
-      currentUser <- lift $ (readMVar (_currentUser storage))
+      currentUser <- lift $ readMVar (_currentUser storage)
       lift (_fetchUser storage (_username currentUser)) >>= \case
         Nothing -> outputStrLn "the user wasn't found"
         Just user -> do
