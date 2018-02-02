@@ -27,7 +27,7 @@ instance FromRow User where
   fromRow = User <$> field <*> field <*> field <*> field
 
 fetchUser :: MVar Connection -> String -> IO (Maybe User)
-fetchUser mVarConn username = withMVar mVarConn $ queryDb
+fetchUser mVarConn username = withMVar mVarConn queryDb
   where
     queryDb conn = do
       users <-  query conn "SELECT id, username, publicKey, debts from user WHERE username = ?" [username] :: IO [User]
@@ -37,13 +37,13 @@ fetchUser mVarConn username = withMVar mVarConn $ queryDb
         (_:_)   -> pure Nothing -- Should never happen, since the username is a primary key
 
 fetchUserUnsafe :: MVar Connection -> String -> IO User
-fetchUserUnsafe mVarConn username = withMVar mVarConn $ queryDb
+fetchUserUnsafe mVarConn username = withMVar mVarConn queryDb
   where
     queryDb conn = do
       users <-  query conn "SELECT id, username, publicKey, debts from user WHERE username = ?" [username] :: IO [User]
       case users of
         []      -> exitFailure
-        [!user] -> pure $ user
+        [!user] -> pure user
         (_:_)   -> exitFailure
 
 incUserDebts :: MVar Connection -> UserId -> Float -> IO ()
