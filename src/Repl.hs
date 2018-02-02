@@ -11,6 +11,7 @@ module Repl (
   where
 
 import           Control.Concurrent.MVar
+import           Control.Monad
 import           Control.Monad.Trans          (liftIO)
 import           Data.List
 import           Data.Storage.Purchase
@@ -81,7 +82,7 @@ me storage = do
   let currentUser = _currentUser storage
   isEmptyMVar currentUser >>= \case
     True -> putStrLn "You're not logged in"
-    False -> readMVar currentUser >>= (\u-> putStrLn $ "You're logged in as \"" ++ _username u ++ "\" And youre " ++ show (_debts u) ++ "€ in debt.")
+    False -> readMVar currentUser >>= (\u-> putStrLn $ "You're logged in as \"" ++ _username u ++ "\" And you're " ++ show (_debts u) ++ "€ in debt.")
 
 purchases :: Storage -> IO ()
 purchases storage =
@@ -110,9 +111,9 @@ buy storage s =
                   let userId = _userId user
                   _incUserDebts storage userId (_price stock)
                   _addPurchase storage userId stockId
-                  newUser <- _fetchUserUnsafe storage (_username currentUser)
-                  _ <- swapMVar (_currentUser storage) newUser
-                  pure ()
+                  _fetchUser storage (_username currentUser) >>= \case
+                    Nothing   -> print "The user has been deleted"
+                    Just u -> void $ swapMVar (_currentUser storage) u
                 Nothing -> print ("Something weird happened, Ladies and Gentlemen!" :: String)
   where
     readStockId :: String -> StockId

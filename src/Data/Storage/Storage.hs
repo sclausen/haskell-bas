@@ -12,16 +12,15 @@ import           Data.Storage.User
 import           Database.SQLite.Simple
 
 data Storage = Storage
-  { _conn            :: MVar Connection
-  , _addPurchase     :: UserId -> StockId -> IO ()
-  , _currentUser     :: MVar User
-  , _decStockAmount  :: StockId -> IO (Either String ())
-  , _fetchPurchases  :: Int -> Int -> IO [Purchase]
-  , _fetchStock      :: StockId -> IO (Maybe Stock)
-  , _fetchStocks     :: IO [Stock]
-  , _fetchUser       :: String -> IO (Maybe User)
-  , _fetchUserUnsafe :: String -> IO User
-  , _incUserDebts    :: UserId -> Float -> IO ()
+  { _conn           :: MVar Connection
+  , _addPurchase    :: UserId -> StockId -> IO ()
+  , _currentUser    :: MVar User
+  , _decStockAmount :: StockId -> IO (Either String ())
+  , _fetchPurchases :: Int -> Int -> IO [Purchase]
+  , _fetchStock     :: StockId -> IO (Maybe Stock)
+  , _fetchStocks    :: IO [Stock]
+  , _fetchUser      :: String -> IO (Maybe User)
+  , _incUserDebts   :: UserId -> Float -> IO ()
   }
 
 newStorage :: IO Storage
@@ -40,7 +39,6 @@ newStorage = do
   , _fetchStock = fetchStock mVarConn
   , _fetchStocks = fetchStocks mVarConn
   , _fetchUser = fetchUser mVarConn
-  , _fetchUserUnsafe = fetchUserUnsafe mVarConn
   , _incUserDebts = incUserDebts mVarConn
   }
 
