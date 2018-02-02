@@ -13,6 +13,7 @@ import           Data.Storage.User
 import           Data.Time.Clock
 import           Database.SQLite.Simple
 import qualified Text.PrettyPrint.ANSI.Leijen as PP
+import           Text.Printf
 
 type PurchaseId = Int
 
@@ -41,6 +42,6 @@ prettyPrintPurchase ps = do
   print $ PP.black $ PP.ondullwhite $ PP.fill 15 (PP.text "Product") PP.<+> PP.fill 6 (PP.text "Price") PP.<+> PP.fill 23 (PP.text "Date")
   print $ PP.vcat $ fmap (\p ->
     PP.fill 15 (PP.text $ _stockLabel p) PP.<+>
-    PP.fill 6 (PP.float $ _sPrice p) PP.<> PP.text "€" PP.<+>
+    PP.fill 6 (PP.text $ printf "%.2f€" $ _sPrice p) PP.<+>
     PP.fill 23 (PP.text $ show $ _boughtAt p)
     ) ps

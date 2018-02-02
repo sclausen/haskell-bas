@@ -90,7 +90,7 @@ purchases storage =
     False -> prettyPrintPurchase =<< _fetchPurchases storage 0 10
 
 stocks :: Storage -> IO ()
-stocks storage = _fetchStocks storage >>= print
+stocks storage = prettyPrintStocks =<< _fetchStocks storage
 
 buy :: Storage -> String -> IO ()
 buy storage s =
