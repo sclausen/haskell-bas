@@ -1,3 +1,4 @@
+{-# LANGUAGE NamedFieldPuns    #-}
 {-# LANGUAGE OverloadedStrings #-}
 module Data.Storage.Storage (
     Storage (..)
@@ -12,14 +13,15 @@ import           Database.SQLite.Simple
 
 data Storage = Storage
   { _conn            :: MVar Connection
-  , _currentUser     :: MVar User
   , _addPurchase     :: UserId -> StockId -> IO ()
+  , _currentUser     :: MVar User
+  , _decStockAmount  :: StockId -> IO (Either String ())
+  , _fetchPurchases  :: Int -> Int -> IO [Purchase]
+  , _fetchStock      :: StockId -> IO (Maybe Stock)
+  , _fetchStocks     :: IO [Stock]
   , _fetchUser       :: String -> IO (Maybe User)
   , _fetchUserUnsafe :: String -> IO User
   , _incUserDebts    :: UserId -> Float -> IO ()
-  , _fetchStock      :: StockId -> IO (Maybe Stock)
-  , _fetchStocks     :: IO [Stock]
-  , _decStockAmount  :: StockId -> IO (Either String ())
   }
 
 newStorage :: IO Storage
@@ -28,16 +30,18 @@ newStorage = do
   initialize conn
   mVarConn <- newMVar conn
   currentUser <- newEmptyMVar
+
   pure Storage {
     _conn = mVarConn
-  , _currentUser = currentUser
   , _addPurchase = addPurchase mVarConn
+  , _currentUser = currentUser
+  , _decStockAmount = decStockAmount mVarConn
+  , _fetchPurchases = fetchPurchases mVarConn currentUser
+  , _fetchStock = fetchStock mVarConn
+  , _fetchStocks = fetchStocks mVarConn
   , _fetchUser = fetchUser mVarConn
   , _fetchUserUnsafe = fetchUserUnsafe mVarConn
   , _incUserDebts = incUserDebts mVarConn
-  , _fetchStock = fetchStock mVarConn
-  , _fetchStocks = fetchStocks mVarConn
-  , _decStockAmount = decStockAmount mVarConn
   }
 
 initialize :: Connection -> IO ()

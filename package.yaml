@@ -25,6 +25,7 @@ dependencies:
 - clock
 - haskeline
 - mtl
+- time
 - sqlite-simple
 library:
   source-dirs: src

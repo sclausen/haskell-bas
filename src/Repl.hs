@@ -13,6 +13,7 @@ module Repl (
 import           Control.Concurrent.MVar
 import           Control.Monad.Trans          (liftIO)
 import           Data.List
+import           Data.Storage.Purchase
 import           Data.Storage.Stock
 import           Data.Storage.Storage
 import           Data.Storage.User
@@ -88,7 +89,7 @@ purchases :: Storage -> IO ()
 purchases storage =
   isEmptyMVar (_currentUser storage) >>= \case
     True -> putStrLn "You're not logged in"
-    False -> putStrLn "List of all your purchases here ->"
+    False -> prettyPrintPurchase =<< _fetchPurchases storage 0 10
 
 stocks :: Storage -> IO ()
 stocks storage = _fetchStocks storage >>= print
