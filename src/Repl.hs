@@ -21,6 +21,7 @@ import           PrettyPrint
 import           System.Console.Haskeline
 import           System.Exit
 import           Text.Printf
+import           Text.Read                (readMaybe)
 
 type Repl a = InputT IO a
 
@@ -85,7 +86,7 @@ purchases :: Storage -> IO ()
 purchases storage =
   isEmptyMVar (_currentUser storage) >>= \case
     True -> putStrLn (errorText "You're not logged in")
-    False -> prettyPrintPurchase =<< _fetchPurchases storage 0 10
+    False -> _fetchPurchases storage 0 10
 
 stocks :: Storage -> IO ()
 stocks storage = prettyPrintStocks =<< _fetchStocks storage
@@ -102,22 +103,24 @@ buy storage =
           mLine <- getInputLine "Please enter a StockId: "
           case mLine of
             Nothing -> outputStrLn "How can you enter nothing? Would be strange, wouldn't it?"
-            Just input -> liftIO $ do
-              let stockId = readStockId input
-              _decStockAmount storage stockId >>= \case
-                Left _ -> putStrLn (errorText $ "No Stock exists under the StockId " ++ show stockId :: String)
-                Right stock -> do
-                      let userId = _userId user
-                      _incUserDebts storage userId (_price stock)
-                      _addPurchase storage userId stockId
-                      _fetchUser storage (_username currentUser) >>= \case
-                        Nothing   -> putStrLn (errorText "The user has been deleted")
-                        Just u -> do
-                          void $ swapMVar (_currentUser storage) u
-                          putStrLn $ successText $ "You've bought one item of the stock \""++ _label stock ++ "\" for " ++ printf "%.2f€" (_price stock) ++ "."
+            Just input -> liftIO $
+              case readStockId input of
+                Nothing -> putStrLn (errorText "This is not a valid StockId")
+                Just stockId -> _decStockAmount storage stockId >>= \case
+                  Left _ -> putStrLn (errorText $ "No Stock exists under the StockId " ++ show stockId :: String)
+                  Right stock -> do
+                        let userId = _userId user
+                        _incUserDebts storage userId (_price stock)
+                        _addPurchase storage userId stockId
+                        _fetchUser storage (_username currentUser) >>= \case
+                          Nothing   -> putStrLn (errorText "The user has been deleted")
+                          Just u -> do
+                            void $ swapMVar (_currentUser storage) u
+                            putStrLn $ successText $ "You've bought one item of the stock \""++ _label stock ++ "\" for " ++ printf "%.2f€" (_price stock) ++ "."
+
   where
-    readStockId :: String -> StockId
-    readStockId = read
+    readStockId :: String -> Maybe StockId
+    readStockId = readMaybe
 
 trim :: String -> String
 trim = f . f
