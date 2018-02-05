@@ -31,10 +31,10 @@ appSettings = (defaultSettings :: Settings IO)
   }
 
 keywords :: [String]
-keywords = ["stocks", "buy", "login", "logout", "me", "purchases"]
+keywords = ["buy", "debts", "login", "logout", "purchases", "stocks"]
 
 search :: String -> [Completion]
-search str = map simpleCompletion $ filter (str `isPrefixOf`) keywords
+search str = simpleCompletion <$> filter (str `isPrefixOf`) keywords
 
 process :: String -> Storage -> Repl ()
 process s storage
@@ -42,7 +42,7 @@ process s storage
   | s == "buy"                     = buy storage
   | s == "stocks"                  = liftIO $ stocks storage
   | s == "purchases"               = liftIO $ purchases storage
-  | s == "me"                      = liftIO $ me storage
+  | s == "debts"                   = liftIO $ debts storage
   | s == "login"                   = login storage
   | s == "logout"                  = liftIO $ logout storage
   | s `elem` ["q", "quit", "exit"] = liftIO exitSuccess
@@ -50,40 +50,41 @@ process s storage
 
 repl :: Storage -> Repl ()
 repl storage = do
-  minput <- getInputLine "bas $ "
+  prettyPrompt <- lift $ getPrettyPrompt storage
+  minput <- getInputLine prettyPrompt
   case minput of
-    Nothing    -> outputStrLn "This should not happen."
+    Nothing    -> outputStrLn (errorText "Never heard of really empty input…")
     Just input -> process (trim input) storage >> repl storage
 
 login :: Storage -> Repl ()
 login storage = do
   let currentUser = _currentUser storage
   lift (isEmptyMVar currentUser) >>= \case
-    False -> outputStrLn "You're already logged in"
+    False -> outputStrLn (errorText "You're already logged in")
     True -> getInputLine "Please enter a username: " >>= \case
-      Nothing -> outputStrLn "Never heard of really empty input…"
+      Nothing -> outputStrLn (errorText "Never heard of really empty input…")
       Just username -> lift (_fetchUser storage username >>= \case
-        Nothing -> putStrLn "This user doesn't exist!"
-        Just user -> putMVar (_currentUser storage) user >> putStrLn "Successfully logged in!")
+        Nothing -> putStrLn (errorText "This user doesn't exist!")
+        Just user -> putMVar (_currentUser storage) user >> putStrLn (successText "Successfully logged in!"))
 
 logout :: Storage -> IO ()
 logout storage = do
   let currentUser = _currentUser storage
   isEmptyMVar currentUser >>= \case
-    True -> putStrLn "You're not logged in"
-    False -> takeMVar currentUser >> putStrLn "You've been successfully logged out!"
+    True -> putStrLn (errorText "You're not logged in")
+    False -> takeMVar currentUser >> putStrLn (successText "You've been successfully logged out!")
 
-me :: Storage -> IO ()
-me storage = do
+debts :: Storage -> IO ()
+debts storage = do
   let currentUser = _currentUser storage
   isEmptyMVar currentUser >>= \case
-    True -> putStrLn "You're not logged in"
-    False -> readMVar currentUser >>= (\u-> putStrLn $ "You're logged in as \"" ++ _username u ++ "\" and you're " ++ printf "%.2f€" (_debts u) ++ " in debt.")
+    True -> putStrLn (errorText "You're not logged in")
+    False -> readMVar currentUser >>= \u-> putStrLn $ prettyDebts $ printf "%.2f€" (_debts u)
 
 purchases :: Storage -> IO ()
 purchases storage =
   isEmptyMVar (_currentUser storage) >>= \case
-    True -> putStrLn "You're not logged in"
+    True -> putStrLn (errorText "You're not logged in")
     False -> prettyPrintPurchase =<< _fetchPurchases storage 0 10
 
 stocks :: Storage -> IO ()
@@ -92,11 +93,11 @@ stocks storage = prettyPrintStocks =<< _fetchStocks storage
 buy :: Storage -> Repl ()
 buy storage =
   lift (isEmptyMVar (_currentUser storage)) >>= \case
-    True -> outputStrLn "You're not logged in"
+    True -> outputStrLn (errorText "You're not logged in")
     False -> do
       currentUser <- lift $ readMVar (_currentUser storage)
       lift (_fetchUser storage (_username currentUser)) >>= \case
-        Nothing -> outputStrLn "the user wasn't found"
+        Nothing -> outputStrLn (errorText "the user wasn't found")
         Just user -> do
           mLine <- getInputLine "Please enter a StockId: "
           case mLine of
@@ -104,16 +105,16 @@ buy storage =
             Just input -> liftIO $ do
               let stockId = readStockId input
               _decStockAmount storage stockId >>= \case
-                Left _ -> putStrLn ("No Stock exists under the StockId " ++ show stockId :: String)
+                Left _ -> putStrLn (errorText $ "No Stock exists under the StockId " ++ show stockId :: String)
                 Right stock -> do
                       let userId = _userId user
                       _incUserDebts storage userId (_price stock)
                       _addPurchase storage userId stockId
                       _fetchUser storage (_username currentUser) >>= \case
-                        Nothing   -> putStrLn "The user has been deleted"
+                        Nothing   -> putStrLn (errorText "The user has been deleted")
                         Just u -> do
                           void $ swapMVar (_currentUser storage) u
-                          putStrLn $ "You've bought one item of the stock \""++ _label stock ++ "\" for " ++ printf "%.2f€" (_price stock) ++ "."
+                          putStrLn $ successText $ "You've bought one item of the stock \""++ _label stock ++ "\" for " ++ printf "%.2f€" (_price stock) ++ "."
   where
     readStockId :: String -> StockId
     readStockId = read
