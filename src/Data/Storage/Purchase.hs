@@ -1,4 +1,3 @@
-{-# OPTIONS_GHC -funbox-strict-fields #-}
 {-# LANGUAGE OverloadedStrings #-}
 module Data.Storage.Purchase (
     Purchase (..)
@@ -77,15 +76,9 @@ getCharHidden :: IO () -> IO ()
 getCharHidden cb = do
   hSetEcho stdin False
   key <- getKey
-  when (key /= "\ESC") $
-    case key of
-      -- "\ESC[A" -> putStr "↑"
-      -- "\ESC[B" -> putStr "↓"
-      -- "\ESC[C" -> putStr "→"
-      -- "\ESC[D" -> putStr "←"
-      "\n" -> cb
-      -- "\DEL"   -> putStr "⎋"
-      _    -> return ()
+  case key of
+    "\n" -> cb
+    _    -> return ()
 
 getKey :: IO String
 getKey = reverse <$> getKey' ""

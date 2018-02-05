@@ -1,4 +1,3 @@
-{-# OPTIONS_GHC -funbox-strict-fields #-}
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 module Data.Storage.Stock (

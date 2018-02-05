@@ -33,7 +33,7 @@ getPrettyPrompt storage = do
   let currentUser = _currentUser storage
   isEmptyMVar currentUser >>= \case
     True -> pure "bas % "
-    False -> readMVar currentUser >>= \u -> pure $ (boldBlueText $ _username u) ++ "@bas % "
+    False -> readMVar currentUser >>= \u -> pure $ boldBlueText (_username u) ++ "@bas % "
 
 redText :: String -> String
 redText = show . red . text

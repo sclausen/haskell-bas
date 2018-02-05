@@ -1,6 +1,5 @@
 {-# LANGUAGE BangPatterns      #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# OPTIONS_GHC -funbox-strict-fields #-}
 module Data.Storage.User (
     User (..)
   , UserId
