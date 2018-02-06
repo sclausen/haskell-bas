@@ -49,9 +49,8 @@ fetchPurchase mConn mUser offset = do
   user <- readMVar mUser
   purchases <- withMVar mConn $ \conn -> query conn "SELECT purchase.id, userId, stockId, boughtAt, stock.price, stock.label FROM purchase LEFT JOIN stock ON stock.id = purchase.stockId WHERE userId = ? ORDER BY boughtAt DESC LIMIT ?, 1" (_userId user, offset)
   case purchases of
-    []         -> pure ()
     [purchase] -> prettyPrintPurchase purchase >> waitForNext
-    (_:_)      -> pure ()
+    _          -> pure ()
   where
     waitForNext = getCharHidden (fetchPurchase mConn mUser (offset+1))
 
