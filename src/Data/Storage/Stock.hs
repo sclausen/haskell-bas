@@ -1,4 +1,3 @@
-{-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 module Data.Storage.Stock (
     Stock (..)
@@ -9,6 +8,7 @@ module Data.Storage.Stock (
 ) where
 
 import           Control.Concurrent.MVar
+import           Data.Either.Combinators
 import           Database.SQLite.Simple
 
 type StockId = Int
@@ -28,11 +28,10 @@ fetchStocks mVarConn = withMVar mVarConn $ query_ `flip` "SELECT id, label, pric
 
 fetchStock :: MVar Connection -> StockId -> IO (Maybe Stock)
 fetchStock mVarConn stockId = do
-  stocks <- withMVar mVarConn $ \conn-> query conn "SELECT id, label, price, amount FROM stock WHERE id = ?" [stockId] :: IO [Stock]
+  stocks <- withMVar mVarConn $ \conn -> query conn "SELECT id, label, price, amount FROM stock WHERE id = ?" [stockId] :: IO [Stock]
   case stocks of
     [stock] -> pure $ Just stock
-    []      -> pure Nothing
-    (_:_)   -> pure Nothing -- should not happen, since the id is unique
+    _       -> pure Nothing
 
 decStockAmount :: MVar Connection -> StockId -> IO (Either String Stock)
 decStockAmount mVarConn stockId = withMVar mVarConn $ \conn -> do
@@ -40,6 +39,4 @@ decStockAmount mVarConn stockId = withMVar mVarConn $ \conn -> do
   affectedRows <- changes conn
   if affectedRows == 0
     then pure $ Left "By now the stock has already been depleted!"
-    else query conn "SELECT id, label, price, amount FROM stock WHERE id = ?" [stockId] >>= \case
-        [stock] -> pure $ Right stock
-        _       -> pure $ Left "fetching failed"
+    else  pure . maybeToRight "fetching failed" =<< fetchStock mVarConn stockId

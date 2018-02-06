@@ -23,10 +23,11 @@ dependencies:
 - base >= 4.7 && < 5
 - ansi-wl-pprint
 - clock
+- either >= 5
 - haskeline
 - mtl
-- time
 - sqlite-simple
+- time
 library:
   source-dirs: src
   ghc-options:
