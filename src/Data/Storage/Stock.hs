@@ -39,4 +39,4 @@ decStockAmount mVarConn stockId = withMVar mVarConn $ \conn -> do
   affectedRows <- changes conn
   if affectedRows == 0
     then pure $ Left "By now the stock has already been depleted!"
-    else  pure . maybeToRight "fetching failed" =<< fetchStock mVarConn stockId
+    else  maybeToRight "fetching failed" <$> fetchStock mVarConn stockId
