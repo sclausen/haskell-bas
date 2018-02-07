@@ -30,17 +30,17 @@ newStorage = do
   mVarConn <- newMVar conn
   currentUser <- newEmptyMVar
 
-  pure Storage {
-    _conn = mVarConn
-  , _addPurchase = addPurchase mVarConn
-  , _currentUser = currentUser
-  , _decStockAmount = decStockAmount mVarConn
-  , _fetchPurchases = fetchPurchases mVarConn currentUser
-  , _fetchStock = fetchStock mVarConn
-  , _fetchStocks = fetchStocks mVarConn
-  , _fetchUser = fetchUser mVarConn
-  , _incUserDebts = incUserDebts mVarConn
-  }
+  pure Storage
+    { _conn = mVarConn
+    , _addPurchase = addPurchase mVarConn
+    , _currentUser = currentUser
+    , _decStockAmount = decStockAmount mVarConn
+    , _fetchPurchases = fetchPurchases mVarConn currentUser
+    , _fetchStock = fetchStock mVarConn
+    , _fetchStocks = fetchStocks mVarConn
+    , _fetchUser = fetchUser mVarConn
+    , _incUserDebts = incUserDebts mVarConn
+    }
 
 initialize :: Connection -> IO ()
 initialize conn = do

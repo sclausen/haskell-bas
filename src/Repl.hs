@@ -99,9 +99,8 @@ buy storage =
       currentUser <- lift $ readMVar (_currentUser storage)
       lift (_fetchUser storage (_username currentUser)) >>= \case
         Nothing -> outputStrLn (errorText "the user wasn't found")
-        Just user -> do
-          mLine <- getInputLine "Please enter a StockId: "
-          case mLine of
+        Just user ->
+          getInputLine "Please enter a StockId: " >>= \case
             Nothing -> outputStrLn "How can you enter nothing? Would be strange, wouldn't it?"
             Just input -> liftIO $
               case readStockId input of
@@ -109,14 +108,13 @@ buy storage =
                 Just stockId -> _decStockAmount storage stockId >>= \case
                   Left _ -> putStrLn (errorText $ "No Stock exists under the StockId " ++ show stockId :: String)
                   Right stock -> do
-                        let userId = _userId user
-                        _incUserDebts storage userId (_price stock)
-                        _addPurchase storage userId stockId
-                        _fetchUser storage (_username currentUser) >>= \case
-                          Nothing   -> putStrLn (errorText "The user has been deleted")
-                          Just u -> do
-                            void $ swapMVar (_currentUser storage) u
-                            putStrLn $ successText $ "You've bought one item of the stock \""++ _label stock ++ "\" for " ++ printf "%.2f€" (_price stock) ++ "."
+                    _incUserDebts storage (_userId user) (_price stock)
+                    _addPurchase storage (_userId user) stockId
+                    _fetchUser storage (_username currentUser) >>= \case
+                      Nothing   -> putStrLn (errorText "The user has been deleted")
+                      Just u -> do
+                        void $ swapMVar (_currentUser storage) u
+                        putStrLn $ successText $ "You've bought one item of the stock \""++ _label stock ++ "\" for " ++ printf "%.2f€" (_price stock) ++ "."
 
   where
     readStockId :: String -> Maybe StockId
