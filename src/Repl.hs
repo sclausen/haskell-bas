@@ -35,7 +35,7 @@ makeSettings = do
     }
 
 keywords :: [String]
-keywords = ["buy", "debts", "login", "logout", "purchases", "stocks"]
+keywords = ["buy", "debts", "exit", "purchases", "stocks"]
 
 search :: String -> [Completion]
 search str = simpleCompletion <$> filter (str `isPrefixOf`) keywords
@@ -47,8 +47,6 @@ process s storage
   | s == "stocks"                  = liftIO $ stocks storage
   | s == "purchases"               = liftIO $ purchases storage
   | s == "debts"                   = liftIO $ debts storage
-  | s == "login"                   = login storage
-  | s == "logout"                  = liftIO $ logout storage
   | s `elem` ["q", "quit", "exit"] = liftIO exitSuccess
   | otherwise                      = return ()
 
@@ -59,24 +57,6 @@ repl storage = do
   case minput of
     Nothing    -> outputStrLn (errorText "Never heard of really empty input…")
     Just input -> process (trim input) storage >> repl storage
-
-login :: Storage -> Repl ()
-login storage = do
-  let currentUser = _currentUser storage
-  lift (isEmptyMVar currentUser) >>= \case
-    False -> outputStrLn (errorText "You're already logged in")
-    True -> getInputLine "Please enter a username: " >>= \case
-      Nothing -> outputStrLn (errorText "Never heard of really empty input…")
-      Just username -> lift (_fetchUser storage username >>= \case
-        Nothing -> putStrLn (errorText "This user doesn't exist!")
-        Just user -> putMVar (_currentUser storage) user >> putStrLn (successText "Successfully logged in!"))
-
-logout :: Storage -> IO ()
-logout storage = do
-  let currentUser = _currentUser storage
-  isEmptyMVar currentUser >>= \case
-    True -> putStrLn (errorText "You're not logged in")
-    False -> takeMVar currentUser >> putStrLn (successText "You've been successfully logged out!")
 
 debts :: Storage -> IO ()
 debts storage = do

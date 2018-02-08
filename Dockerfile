@@ -7,10 +7,7 @@ RUN         apt-get update && apt-get install -y openssh-server vim htop locales
             apt-get clean && \
             rm -rf /var/lib/apt/lists/*
 
-RUN         groupadd bas
-RUN         useradd -m -s /bin/bash foo
-RUN         usermod -p '*' foo
-RUN         usermod -aG bas foo
+
 RUN         mkdir -p /var/run/sshd/keys; \
             mkdir /root/.ssh && chmod 700 /root/.ssh; \
             touch /root/.ssh/authorized_keys; \ 
@@ -22,14 +19,19 @@ ENV         LANGUAGE en_US:en
 
 COPY        docker/ssh-start /usr/local/bin/
 COPY        docker/sshd_config /etc/ssh/sshd_config
-COPY        docker/foo.pub /home/foo/.ssh/authorized_keys
 
+RUN         groupadd bas
+RUN         useradd -m -s /bin/bash foo
+RUN         usermod -p '*' foo
+RUN         usermod -aG bas foo
+COPY        docker/foo.pub /home/foo/.ssh/authorized_keys
 RUN         chown -R foo:foo /home/foo/.ssh
 RUN         chmod 700 /home/foo/.ssh
 RUN         chmod 600 /home/foo/.ssh/authorized_keys
 
 COPY        bas.db /tmp/bas/bas.db
 COPY        docker/run-bas.sh /tmp/bas/
+COPY        docker/create-user.sh /root/
 RUN         chown -R root:bas /tmp/bas
 RUN         chmod -R g+rwx /tmp/bas
 COPY        .stack-work/dist/x86_64-linux/Cabal-2.0.1.0/build/haskell-bas/haskell-bas /usr/local/bin/

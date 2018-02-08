@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE NamedFieldPuns    #-}
 {-# LANGUAGE OverloadedStrings #-}
 module Data.Storage.Storage (
@@ -11,6 +12,7 @@ import           Data.Storage.Stock
 import           Data.Storage.User
 import           Database.SQLite.Simple
 import           System.Environment
+import           System.Exit
 
 data Storage = Storage
   { _conn           :: MVar Connection
@@ -29,19 +31,22 @@ newStorage = do
   conn <- open =<< getEnv "DB_FILE"
   initialize conn
   mVarConn <- newMVar conn
-  currentUser <- newEmptyMVar
-
-  pure Storage
-    { _conn = mVarConn
-    , _addPurchase = addPurchase mVarConn
-    , _currentUser = currentUser
-    , _decStockAmount = decStockAmount mVarConn
-    , _fetchPurchases = fetchPurchases mVarConn currentUser
-    , _fetchStock = fetchStock mVarConn
-    , _fetchStocks = fetchStocks mVarConn
-    , _fetchUser = fetchUser mVarConn
-    , _incUserDebts = incUserDebts mVarConn
-    }
+  username <- getEnv "BAS_USER"
+  fetchUser mVarConn username >>= \case
+    Just user -> do
+      currentUser <- newMVar user
+      pure Storage
+        { _conn = mVarConn
+        , _addPurchase = addPurchase mVarConn
+        , _currentUser = currentUser
+        , _decStockAmount = decStockAmount mVarConn
+        , _fetchPurchases = fetchPurchases mVarConn currentUser
+        , _fetchStock = fetchStock mVarConn
+        , _fetchStocks = fetchStocks mVarConn
+        , _fetchUser = fetchUser mVarConn
+        , _incUserDebts = incUserDebts mVarConn
+        }
+    _ -> exitFailure
 
 initialize :: Connection -> IO ()
 initialize conn = do
