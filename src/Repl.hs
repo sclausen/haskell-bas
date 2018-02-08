@@ -3,7 +3,7 @@
 
 module Repl (
   Repl
-  , appSettings
+  , makeSettings
   , process
   , repl
   )
@@ -19,17 +19,20 @@ import           Data.Storage.Storage
 import           Data.Storage.User
 import           PrettyPrint
 import           System.Console.Haskeline
+import           System.Environment
 import           System.Exit
 import           Text.Printf
 import           Text.Read                (readMaybe)
 
 type Repl a = InputT IO a
 
-appSettings :: Settings IO
-appSettings = (defaultSettings :: Settings IO)
-  { historyFile = Just "history"
-  , complete = completeWord Nothing " \t" $ return . search
-  }
+makeSettings :: IO (Settings IO)
+makeSettings = do
+  hf <- getEnv "HISTORY_FILE"
+  pure $ (defaultSettings :: Settings IO)
+    { historyFile = Just hf
+    , complete = completeWord Nothing " \t" $ return . search
+    }
 
 keywords :: [String]
 keywords = ["buy", "debts", "login", "logout", "purchases", "stocks"]

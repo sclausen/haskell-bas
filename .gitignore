@@ -1,5 +1,3 @@
 .stack-work/
 haskell-bas.cabal
 *~
-*.db
-history

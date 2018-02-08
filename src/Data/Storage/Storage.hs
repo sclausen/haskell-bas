@@ -10,6 +10,7 @@ import           Data.Storage.Purchase
 import           Data.Storage.Stock
 import           Data.Storage.User
 import           Database.SQLite.Simple
+import           System.Environment
 
 data Storage = Storage
   { _conn           :: MVar Connection
@@ -25,7 +26,7 @@ data Storage = Storage
 
 newStorage :: IO Storage
 newStorage = do
-  conn <- open "bas.db"
+  conn <- open =<< getEnv "DB_FILE"
   initialize conn
   mVarConn <- newMVar conn
   currentUser <- newEmptyMVar
