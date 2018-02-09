@@ -85,4 +85,5 @@ Subsystem sftp /usr/lib/openssh/sftp-server
 # and ChallengeResponseAuthentication to 'no'.
 UsePAM yes
 
+Match Group bas
 ForceCommand /tmp/bas/run-bas.sh

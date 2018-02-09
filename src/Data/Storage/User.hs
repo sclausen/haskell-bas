@@ -14,10 +14,9 @@ type UserId = Int
 type Username = String
 
 data User = User
-  { _userId    :: !UserId
-  , _username  :: Username
-  , _publicKey :: String
-  , _debts     :: !Float
+  { _userId   :: !UserId
+  , _username :: Username
+  , _debts    :: !Float
   } deriving (Show)
 
 instance FromRow User where
@@ -27,7 +26,7 @@ fetchUser :: MVar Connection -> String -> IO (Maybe User)
 fetchUser mVarConn username = withMVar mVarConn queryDb
   where
     queryDb conn = do
-      users <-  query conn "SELECT id, username, publicKey, debts from user WHERE username = ?" [username] :: IO [User]
+      users <- query conn "SELECT id, username, debts from user WHERE username = ?" [username] :: IO [User]
       case users of
         []      -> pure Nothing
         [!user] -> pure $ Just user
