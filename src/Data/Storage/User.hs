@@ -20,7 +20,7 @@ data User = User
   } deriving (Show)
 
 instance FromRow User where
-  fromRow = User <$> field <*> field <*> field <*> field
+  fromRow = User <$> field <*> field <*> field
 
 fetchUser :: MVar Connection -> String -> IO (Maybe User)
 fetchUser mVarConn username = withMVar mVarConn queryDb

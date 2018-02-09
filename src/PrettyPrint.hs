@@ -35,26 +35,11 @@ getPrettyPrompt storage = do
     True -> pure "bas % "
     False -> readMVar currentUser >>= \u -> pure $ boldBlueText (_username u) ++ "@bas % "
 
-redText :: String -> String
-redText = show . red . text
-
-boldRedText :: String -> String
-boldRedText = show . bold . red . text
-
-blueText :: String -> String
-blueText = show . blue . text
-
 boldBlueText :: String -> String
 boldBlueText = show . bold . blue . text
 
-prettyUsername :: String -> String
-prettyUsername = show . bold . blue . text
-
 prettyDebts :: String -> String
 prettyDebts = show . bold . red . text
-
-greenText :: String -> String
-greenText = show . green . text
 
 errorText :: String -> String
 errorText = show . red . text
