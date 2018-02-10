@@ -1,4 +1,5 @@
 {-# LANGUAGE BangPatterns      #-}
+{-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 module Data.Storage.User (
     User (..)
@@ -23,14 +24,9 @@ instance FromRow User where
   fromRow = User <$> field <*> field <*> field
 
 fetchUser :: MVar Connection -> String -> IO (Maybe User)
-fetchUser mVarConn username = withMVar mVarConn queryDb
-  where
-    queryDb conn = do
-      users <- query conn "SELECT id, username, debts from user WHERE username = ?" [username] :: IO [User]
-      case users of
-        []      -> pure Nothing
-        [!user] -> pure $ Just user
-        (_:_)   -> pure Nothing -- Should never happen, since the username is a primary key
+fetchUser mVarConn username = withMVar mVarConn $ \conn -> query conn "SELECT id, username, debts from user WHERE username = ?" [username] >>= \case
+  [!user] -> pure $ Just user
+  _      -> pure Nothing
 
 incUserDebts :: MVar Connection -> UserId -> Float -> IO ()
 incUserDebts mVarConn userId summand = withMVar mVarConn $ \conn -> execute conn "UPDATE user SET debts = debts + ? WHERE id = ?" (summand, userId)

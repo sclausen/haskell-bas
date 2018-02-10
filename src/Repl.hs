@@ -69,7 +69,7 @@ purchases :: Storage -> IO ()
 purchases storage =
   isEmptyMVar (_currentUser storage) >>= \case
     True -> putStrLn (errorText "You're not logged in")
-    False -> _fetchPurchases storage 0 10
+    False -> _fetchPurchases storage 10
 
 stocks :: Storage -> IO ()
 stocks storage = prettyPrintStocks =<< _fetchStocks storage
@@ -88,9 +88,9 @@ buy storage =
             Just input -> liftIO $
               case readStockId input of
                 Nothing -> putStrLn (errorText "This is not a valid StockId")
-                Just stockId -> _decStockAmount storage stockId >>= \case
-                  Left _ -> putStrLn (errorText $ "No Stock exists under the StockId " ++ show stockId :: String)
-                  Right stock -> do
+                Just stockId -> _decAndFetchStock storage stockId >>= \case
+                  Nothing -> putStrLn (errorText $ "No Stock exists under the StockId " ++ show stockId :: String)
+                  Just stock -> do
                     _incUserDebts storage (_userId user) (_price stock)
                     _addPurchase storage (_userId user) stockId
                     _fetchUser storage (_username currentUser) >>= \case

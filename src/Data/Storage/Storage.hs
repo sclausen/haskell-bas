@@ -15,15 +15,15 @@ import           System.Environment
 import           System.Exit
 
 data Storage = Storage
-  { _conn           :: MVar Connection
-  , _currentUser    :: MVar User
-  , _addPurchase    :: UserId -> StockId -> IO ()
-  , _decStockAmount :: StockId -> IO (Either String Stock)
-  , _fetchPurchases :: Int -> Int -> IO ()
-  , _fetchStock     :: StockId -> IO (Maybe Stock)
-  , _fetchStocks    :: IO [Stock]
-  , _fetchUser      :: String -> IO (Maybe User)
-  , _incUserDebts   :: UserId -> Float -> IO ()
+  { _conn             :: MVar Connection
+  , _currentUser      :: MVar User
+  , _addPurchase      :: UserId -> StockId -> IO ()
+  , _decAndFetchStock :: StockId -> IO (Maybe Stock)
+  , _fetchPurchases   :: Int -> IO ()
+  , _fetchStock       :: StockId -> IO (Maybe Stock)
+  , _fetchStocks      :: IO [Stock]
+  , _fetchUser        :: String -> IO (Maybe User)
+  , _incUserDebts     :: UserId -> Float -> IO ()
   }
 
 newStorage :: IO Storage
@@ -39,7 +39,7 @@ newStorage = do
         { _conn = mVarConn
         , _addPurchase = addPurchase mVarConn
         , _currentUser = currentUser
-        , _decStockAmount = decStockAmount mVarConn
+        , _decAndFetchStock = decAndFetchStock mVarConn
         , _fetchPurchases = fetchPurchases mVarConn currentUser
         , _fetchStock = fetchStock mVarConn
         , _fetchStocks = fetchStocks mVarConn
