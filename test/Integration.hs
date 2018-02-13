@@ -19,7 +19,6 @@ main = do
   storage <- newStorage
   let mConn = _conn storage
 
-  let userId = 1 :: Int
   let stockId = 1 :: Int
   void $ _addPurchase storage stockId
   void $ _decAndFetchStock storage stockId
