@@ -10,7 +10,6 @@ module Repl (
   where
 
 import           Control.Concurrent.MVar
-import           Control.Monad
 import           Control.Monad.Trans      (lift, liftIO)
 import           Data.Char
 import           Data.List
@@ -55,7 +54,7 @@ repl storage = do
   prettyPrompt <- lift $ getPrettyPrompt storage
   minput <- getInputLine prettyPrompt
   case minput of
-    Nothing    -> outputStrLn (errorText "Never heard of really empty input…")
+    Nothing    -> liftIO exitSuccess
     Just input -> process (trim input) storage >> repl storage
 
 debts :: Storage -> IO ()
@@ -69,7 +68,7 @@ purchases :: Storage -> IO ()
 purchases storage =
   isEmptyMVar (_currentUser storage) >>= \case
     True -> putStrLn (errorText "You're not logged in")
-    False -> _fetchPurchases storage 10
+    False -> printPurchases storage 10
 
 stocks :: Storage -> IO ()
 stocks storage = prettyPrintStocks =<< _fetchStocks storage
@@ -78,26 +77,17 @@ buy :: Storage -> Repl ()
 buy storage =
   lift (isEmptyMVar (_currentUser storage)) >>= \case
     True -> outputStrLn (errorText "You're not logged in")
-    False -> do
-      currentUser <- lift $ readMVar (_currentUser storage)
-      lift (_fetchUser storage (_username currentUser)) >>= \case
-        Nothing -> outputStrLn (errorText "the user wasn't found")
-        Just user ->
-          getInputLine "Please enter a StockId: " >>= \case
-            Nothing -> outputStrLn "How can you enter nothing? Would be strange, wouldn't it?"
-            Just input -> liftIO $
-              case readStockId input of
-                Nothing -> putStrLn (errorText "This is not a valid StockId")
-                Just stockId -> _decAndFetchStock storage stockId >>= \case
-                  Nothing -> putStrLn (errorText $ "No Stock exists under the StockId " ++ show stockId :: String)
-                  Just stock -> do
-                    _incUserDebts storage (_userId user) (_price stock)
-                    _addPurchase storage (_userId user) stockId
-                    _fetchUser storage (_username currentUser) >>= \case
-                      Nothing   -> putStrLn (errorText "The user has been deleted")
-                      Just u -> do
-                        void $ swapMVar (_currentUser storage) u
-                        putStrLn $ successText $ "You've bought one item of the stock \""++ _label stock ++ "\" for " ++ printf "%.2f€" (_price stock) ++ "."
+    False -> getInputLine "Please enter a StockId: " >>= \case
+      Nothing -> liftIO exitSuccess
+      Just input -> liftIO $
+        case readStockId input of
+          Nothing -> putStrLn (errorText "This is not a valid StockId")
+          Just stockId -> _decAndFetchStock storage stockId >>= \case
+            Nothing -> putStrLn (errorText $ "No Stock exists under the StockId " ++ show stockId :: String)
+            Just stock -> do
+              _incUserDebts storage (_price stock)
+              _addPurchase storage stockId
+              putStrLn $ successText $ "You've bought one item of the stock \""++ _label stock ++ "\" for " ++ printf "%.2f€" (_price stock) ++ "."
 
   where
     readStockId :: String -> Maybe StockId

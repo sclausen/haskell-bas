@@ -1,16 +1,21 @@
 {-# LANGUAGE LambdaCase #-}
 module PrettyPrint (
-    prettyDebts
+    getPrettyPrompt
+  , prettyDebts
+  , prettyUsername
   , prettyPrintStocks
-  , getPrettyPrompt
+  , printPurchases
   , errorText
   , successText
 ) where
 
+import qualified Control.Applicative          as A
 import           Control.Concurrent.MVar
+import           Data.Storage.Purchase
 import           Data.Storage.Stock
 import           Data.Storage.Storage
 import           Data.Storage.User
+import           System.IO                    (hReady, hSetEcho, stdin)
 import           Text.PrettyPrint.ANSI.Leijen
 import           Text.Printf
 
@@ -34,6 +39,9 @@ getPrettyPrompt storage = do
 boldBlueText :: String -> String
 boldBlueText = show . bold . blue . text
 
+prettyUsername :: String -> String
+prettyUsername = show . bold . blue . text
+
 prettyDebts :: String -> String
 prettyDebts = show . bold . red . text
 
@@ -42,3 +50,49 @@ errorText = show . red . text
 
 successText :: String -> String
 successText = show . green . text
+
+printPurchases :: Storage -> Int -> IO ()
+printPurchases storage limit = do
+  printHeader
+  printPurchases' 0
+  where
+    printPurchases' curOffset = _fetchPurchases storage curOffset limit >>= \case
+      []        -> pure ()
+      ps -> do
+        prettyPrintPurchases ps
+        getCharHidden (printPurchases' (curOffset + 1))
+
+printHeader :: IO ()
+printHeader =
+  print
+    $   bold
+    $   black
+    $   ondullwhite
+    $   fill 15 (text "Product")
+    <+> fill 6  (text "Price")
+    <+> fill 23 (text "Date")
+
+prettyPrintPurchases :: [Purchase] -> IO ()
+prettyPrintPurchases ps = print $ vcat $ fmap
+  ( \p ->
+    fill 15 (text $ _stockLabel p) <+>
+    fill 6  (text $ printf "%.2f€" $ _sPrice p) <+>
+    fill 23 (text $ show $ _boughtAt p)
+  )
+  ps
+
+getCharHidden :: IO () -> IO ()
+getCharHidden cb = do
+  hSetEcho stdin False
+  key <- getKey
+  case key of
+    "\n" -> cb
+    _    -> return ()
+
+getKey :: IO String
+getKey = reverse A.<$> getKey' ""
+ where
+  getKey' cs = do
+    c <- getChar
+    more <- hReady stdin
+    (if more then getKey' else return) (c : cs)

@@ -17,13 +17,13 @@ import           System.Exit
 data Storage = Storage
   { _conn             :: MVar Connection
   , _currentUser      :: MVar User
-  , _addPurchase      :: UserId -> StockId -> IO ()
+  , _addPurchase      :: StockId -> IO ()
   , _decAndFetchStock :: StockId -> IO (Maybe Stock)
-  , _fetchPurchases   :: Int -> IO ()
+  , _fetchPurchases   :: Int -> Int -> IO [Purchase]
   , _fetchStock       :: StockId -> IO (Maybe Stock)
   , _fetchStocks      :: IO [Stock]
   , _fetchUser        :: String -> IO (Maybe User)
-  , _incUserDebts     :: UserId -> Float -> IO ()
+  , _incUserDebts     :: Float -> IO ()
   }
 
 newStorage :: IO Storage
@@ -37,14 +37,14 @@ newStorage = do
       currentUser <- newMVar user
       pure Storage
         { _conn = mVarConn
-        , _addPurchase = addPurchase mVarConn
+        , _addPurchase = addPurchase mVarConn currentUser
         , _currentUser = currentUser
         , _decAndFetchStock = decAndFetchStock mVarConn
         , _fetchPurchases = fetchPurchases mVarConn currentUser
         , _fetchStock = fetchStock mVarConn
         , _fetchStocks = fetchStocks mVarConn
         , _fetchUser = fetchUser mVarConn
-        , _incUserDebts = incUserDebts mVarConn
+        , _incUserDebts = incUserDebts mVarConn currentUser
         }
     _ -> exitFailure
 

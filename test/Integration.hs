@@ -8,8 +8,8 @@ import           System.IO
 
 main :: IO ()
 main = do
-  (dbFile,_)      <- openTempFile "/tmp" "bas.db"
-  (historyFile,_) <- openTempFile "/tmp" "bas.history"
+  (dbFile, _)      <- openTempFile "/tmp" "bas.db"
+  (historyFile, _) <- openTempFile "/tmp" "bas.history"
 
   setEnv "DB_FILE" dbFile
   setEnv "HISTORY_FILE" historyFile
@@ -21,13 +21,13 @@ main = do
 
   let userId = 1 :: Int
   let stockId = 1 :: Int
-  void $ _addPurchase storage userId stockId
+  void $ _addPurchase storage stockId
   void $ _decAndFetchStock storage stockId
-  -- void $ _fetchPurchases storage userId
+  void $ _fetchPurchases storage 0 10
   void $ _fetchStock storage stockId
   void $ _fetchStocks storage
   void $ _fetchUser storage "foo"
-  void $ _incUserDebts storage userId 1.0
+  void $ _incUserDebts storage 1.0
 
   removeFile dbFile
   removeFile historyFile
