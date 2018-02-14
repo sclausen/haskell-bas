@@ -43,13 +43,13 @@ search str = simpleCompletion <$> filter (str `isPrefixOf`) keywords
 process :: String -> Storage -> Repl ()
 process s storage
   | s == "" = return ()
-  | s == "buy"                     = buy storage
-  | s == "help"                    = liftIO $ putStrLn $ "commands: " ++ unwords keywords
-  | s == "stocks"                  = liftIO $ stocks storage
-  | s == "purchases"               = liftIO $ purchases storage
-  | s == "debts"                   = liftIO $ debts storage
-  | s `elem` ["q", "quit", "exit"] = liftIO exitSuccess
-  | otherwise                      = return ()
+  | s == "buy"                      = buy storage
+  | s == "help"                     = liftIO $ putStrLn $ "commands: " ++ unwords keywords
+  | s `elem` ["stocks", "ls", "ll"] = liftIO $ stocks storage
+  | s == "purchases"                = liftIO $ purchases storage
+  | s == "debts"                    = liftIO $ debts storage
+  | s `elem` ["q", "quit", "exit"]  = liftIO exitSuccess
+  | otherwise                       = return ()
 
 repl :: Storage -> Repl ()
 repl storage = do
