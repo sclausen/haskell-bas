@@ -28,7 +28,7 @@ StrictModes no
 RSAAuthentication yes
 PubkeyAuthentication yes
 #AuthorizedKeysFile     %h/.ssh/authorized_keys
-AuthorizedKeysFile     %h/.ssh/authorized_keys
+AuthorizedKeysFile     /var/run/sshd/keys/%u.pub
 
 # Don't read the user's ~/.rhosts and ~/.shosts files
 IgnoreRhosts yes
@@ -86,4 +86,4 @@ Subsystem sftp /usr/lib/openssh/sftp-server
 UsePAM yes
 
 Match Group bas
-ForceCommand /tmp/bas/run-bas.sh
+ForceCommand /etc/bas/run-bas.sh

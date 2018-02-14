@@ -19,7 +19,6 @@ import           Data.Storage.Storage
 import           Data.Storage.User
 import           PrettyPrint
 import           System.Console.Haskeline
-import           System.Environment
 import           System.Exit
 import           Text.Printf
 import           Text.Read                (readMaybe)
@@ -27,15 +26,13 @@ import           Text.Read                (readMaybe)
 type Repl a = InputT IO a
 
 makeSettings :: IO (Settings IO)
-makeSettings = do
-  hf <- getEnv "HISTORY_FILE"
-  pure $ (defaultSettings :: Settings IO)
-    { historyFile = Just hf
-    , complete = completeWord Nothing " \t" $ return . search
-    }
+makeSettings = pure $ (defaultSettings :: Settings IO)
+  { historyFile = Nothing
+  , complete = completeWord Nothing " \t" $ return . search
+  }
 
 keywords :: [String]
-keywords = ["buy", "debts", "exit", "purchases", "stocks"]
+keywords = ["buy", "debts", "exit", "help", "purchases", "stocks"]
 
 search :: String -> [Completion]
 search str = simpleCompletion <$> filter (str `isPrefixOf`) keywords
