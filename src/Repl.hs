@@ -6,6 +6,7 @@ module Repl (
   , makeSettings
   , process
   , repl
+  , keywords
   )
   where
 
@@ -43,6 +44,7 @@ process :: String -> Storage -> Repl ()
 process s storage
   | s == "" = return ()
   | s == "buy"                     = buy storage
+  | s == "help"                    = liftIO $ putStrLn $ "commands: " ++ unwords keywords
   | s == "stocks"                  = liftIO $ stocks storage
   | s == "purchases"               = liftIO $ purchases storage
   | s == "debts"                   = liftIO $ debts storage
@@ -77,17 +79,19 @@ buy :: Storage -> Repl ()
 buy storage =
   lift (isEmptyMVar (_currentUser storage)) >>= \case
     True -> outputStrLn (errorText "You're not logged in")
-    False -> getInputLine "Please enter a StockId: " >>= \case
-      Nothing -> liftIO exitSuccess
-      Just input -> liftIO $
-        case readStockId input of
-          Nothing -> putStrLn (errorText "This is not a valid StockId")
-          Just stockId -> _decAndFetchStock storage stockId >>= \case
-            Nothing -> putStrLn (errorText $ "No Stock exists under the StockId " ++ show stockId :: String)
-            Just stock -> do
-              _incUserDebts storage (_price stock)
-              _addPurchase storage stockId
-              putStrLn $ successText $ "You've bought one item of the stock \""++ _label stock ++ "\" for " ++ printf "%.2f€" (_price stock) ++ "."
+    False -> do
+      liftIO $ stocks storage
+      getInputLine "\nPlease enter a StockId: " >>= \case
+        Nothing -> liftIO exitSuccess
+        Just input -> liftIO $
+          case readStockId input of
+            Nothing -> putStrLn (errorText "This is not a valid StockId")
+            Just stockId -> _decAndFetchStock storage stockId >>= \case
+              Nothing -> putStrLn (errorText $ "No Stock exists under the StockId " ++ show stockId :: String)
+              Just stock -> do
+                _incUserDebts storage (_price stock)
+                _addPurchase storage stockId
+                putStrLn $ successText $ "You've bought one item of the stock \""++ _label stock ++ "\" for " ++ printf "%.2f€" (_price stock) ++ "."
 
   where
     readStockId :: String -> Maybe StockId
