@@ -11,6 +11,7 @@ module PrettyPrint (
 
 import qualified Control.Applicative          as A
 import           Control.Concurrent.MVar
+import           Control.Monad
 import           Data.Storage.Purchase
 import           Data.Storage.Stock
 import           Data.Storage.Storage
@@ -53,7 +54,9 @@ successText = show . green . text
 
 printPurchases :: Storage -> Int -> IO ()
 printPurchases storage limit = do
-  printHeader
+  t <- _fetchPurchases storage 0 1
+  when (null t) (print $ red (text "Sorry, you haven't bought anything yet!"))
+  unless (null t) printHeader
   printPurchases' 0
   where
     printPurchases' curOffset = _fetchPurchases storage curOffset limit >>= \case
