@@ -9,10 +9,8 @@ import           System.IO
 main :: IO ()
 main = do
   (dbFile, _)      <- openTempFile "/tmp" "bas.db"
-  (historyFile, _) <- openTempFile "/tmp" "bas.history"
 
   setEnv "DB_FILE" dbFile
-  setEnv "HISTORY_FILE" historyFile
   setEnv "BAS_USER" "foo"
 
   initialize =<< open =<< getEnv "DB_FILE"
@@ -29,7 +27,6 @@ main = do
   void $ _incUserDebts storage 1.0
 
   removeFile dbFile
-  removeFile historyFile
 
 initialize :: Connection -> IO ()
 initialize conn = do
