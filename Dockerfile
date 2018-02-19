@@ -29,7 +29,7 @@ RUN         chmod 755 /var/run/sshd/keys; \
 RUN         mkdir -p /etc/bas
 COPY        bas.db /etc/bas/
 COPY        docker/run-bas.sh /etc/bas/
-COPY        docker/create-user.sh /root/
+COPY        docker/scripts /root/
 RUN         chown -R root:bas /etc/bas
 RUN         chmod -R g+rwx /etc/bas
 COPY        .stack-work/dist/x86_64-linux/Cabal-2.0.1.0/build/haskell-bas/haskell-bas /usr/local/bin/
