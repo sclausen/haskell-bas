@@ -18,7 +18,7 @@ type StockId = Int
 data Stock = Stock
   { _stockId :: !StockId
   , _label   :: String
-  , _price   :: !Float
+  , _price   :: !Int
   , _amount  :: !Int
   } deriving (Show)
 

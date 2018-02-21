@@ -19,7 +19,7 @@ data Purchase = Purchase
   , _pUserId    :: !UserId
   , _pStockId   :: !StockId
   , _boughtAt   :: !UTCTime
-  , _sPrice     :: !Float
+  , _sPrice     :: !Int
   , _stockLabel :: String
   } deriving (Show)
 

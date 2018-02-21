@@ -18,7 +18,7 @@ type Username = String
 data User = User
   { _userId   :: !UserId
   , _username :: Username
-  , _debts    :: !Float
+  , _debts    :: !Int
   } deriving (Show)
 
 instance FromRow User where
@@ -29,7 +29,7 @@ fetchUser mVarConn username = withMVar mVarConn $ \conn -> query conn "SELECT id
   [!user] -> pure $ Just user
   _      -> pure Nothing
 
-incUserDebts :: MVar Connection -> MVar User -> Float -> IO ()
+incUserDebts :: MVar Connection -> MVar User -> Int -> IO ()
 incUserDebts mVarConn mUser summand = do
   user <- readMVar mUser
   withMVar mVarConn $ \conn -> execute conn "UPDATE user SET debts = debts + ? WHERE id = ?" (summand, _userId user)

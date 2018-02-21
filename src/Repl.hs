@@ -61,7 +61,7 @@ debts storage = do
   let currentUser = _currentUser storage
   isEmptyMVar currentUser >>= \case
     True -> putStrLn (errorText "You're not logged in")
-    False -> readMVar currentUser >>= \u-> putStrLn $ prettyDebts $ printf "%.2f€" (_debts u)
+    False -> readMVar currentUser >>= \u-> putStrLn $ prettyDebts $ printf "%d" $ ((_debts u))
 
 purchases :: Storage -> IO ()
 purchases storage =
