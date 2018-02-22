@@ -26,7 +26,7 @@ prettyPrintStocks ss = do
   print $ vcat $ fmap (\s ->
     fill 5 (int $ _stockId s) <+>
     fill 15 (text $ _label s) <+>
-    fill 6 (text $ printf "%d" $ _price s) <+>
+    fill 6 (text $ printf "%.2f€" (fromIntegral (_price s) / 100 :: Float)) <+>
     fill 5 (int $ _amount s)
     ) ss
 
@@ -79,7 +79,7 @@ prettyPrintPurchases :: [Purchase] -> IO ()
 prettyPrintPurchases ps = print $ vcat $ fmap
   ( \p ->
     fill 15 (text $ _stockLabel p) <+>
-    fill 6  (text $ printf "%d" $ _sPrice p) <+>
+    fill 6  (text $ printf "%.2f€" (fromIntegral (_sPrice p) / 100 :: Float)) <+>
     fill 23 (text $ show $ _boughtAt p)
   )
   ps
