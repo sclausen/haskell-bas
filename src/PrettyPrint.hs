@@ -43,8 +43,8 @@ boldBlueText = show . bold . blue . text
 prettyUsername :: String -> String
 prettyUsername = show . bold . blue . text
 
-prettyDebts :: String -> String
-prettyDebts = show . bold . red . text
+prettyDebts :: Bool -> String -> String
+prettyDebts isZero str = show $ bold $ (if isZero then green else red) $ text str
 
 errorText :: String -> String
 errorText = show . red . text

@@ -61,7 +61,7 @@ debts storage = do
   let currentUser = _currentUser storage
   isEmptyMVar currentUser >>= \case
     True -> putStrLn (errorText "You're not logged in")
-    False -> readMVar currentUser >>= \u-> putStrLn $ prettyDebts $ printf "%d" $ (_debts u)
+    False -> readMVar currentUser >>= \u-> putStrLn $ prettyDebts (_debts u == 0) $ printf "%.2f€" $ (fromIntegral (_debts u) / 100 :: Float)
 
 purchases :: Storage -> IO ()
 purchases storage =
@@ -88,7 +88,7 @@ buy storage =
               Just stock -> do
                 _incUserDebts storage (_price stock)
                 _addPurchase storage stockId
-                putStrLn $ successText $ "You've bought one item of the stock \""++ _label stock ++ "\" for " ++ printf "%d" (_price stock) ++ "."
+                putStrLn $ successText $ "You've bought one item of the stock \""++ _label stock ++ "\" for " ++ printf ".2f€" (fromIntegral (_price stock) / 100 :: Float) ++ "."
 
   where
     readStockId :: String -> Maybe StockId
