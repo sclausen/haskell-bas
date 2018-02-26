@@ -88,7 +88,7 @@ buy storage =
               Just stock -> do
                 _incUserDebts storage (_price stock)
                 _addPurchase storage stockId
-                putStrLn $ successText $ "You've bought one item of the stock \""++ _label stock ++ "\" for " ++ printf ".2f€" (fromIntegral (_price stock) / 100 :: Float) ++ "."
+                putStrLn $ successText $ "You bought one item of the stock \""++ _label stock ++ "\" for " ++ printf "%.2f€" (fromIntegral (_price stock) / 100 :: Float) ++ "."
 
   where
     readStockId :: String -> Maybe StockId
