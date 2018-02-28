@@ -18,13 +18,16 @@ main = do
   let mConn = _conn storage
 
   let stockId = 1 :: Int
+  let mUser = _currentUser storage
   void $ _addPurchase storage stockId
   void $ _decAndFetchStock storage stockId
   void $ _fetchPurchases storage 0 10
   void $ _fetchStock storage stockId
   void $ _fetchStocks storage
   void $ _fetchUser storage "foo"
-  void $ _incUserDebts storage 10
+  void $ _incUserDebts storage 100
+  void $ _fetchPayments storage mUser 0 10
+  void $ _addPayment storage mUser 100
 
   removeFile dbFile
 

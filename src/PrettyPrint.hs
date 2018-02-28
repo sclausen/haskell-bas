@@ -4,6 +4,7 @@ module PrettyPrint (
   , prettyDebts
   , prettyUsername
   , prettyPrintStocks
+  , printPayments
   , printPurchases
   , errorText
   , successText
@@ -12,6 +13,7 @@ module PrettyPrint (
 import qualified Control.Applicative          as A
 import           Control.Concurrent.MVar
 import           Control.Monad
+import           Data.Storage.Payment
 import           Data.Storage.Purchase
 import           Data.Storage.Stock
 import           Data.Storage.Storage
@@ -25,9 +27,9 @@ prettyPrintStocks ss = do
   print $ bold $ black $ ondullwhite $ fill 5 (text "ID") <+> fill 15 (text "Label") <+> fill 6 (text "Price") <+> fill 5 (text "Left")
   print $ vcat $ fmap (\s ->
     fill 5 (int $ _stockId s) <+>
-    fill 15 (text $ _label s) <+>
-    fill 6 (text $ printf "%.2f€" (fromIntegral (_price s) / 100 :: Float)) <+>
-    fill 5 (int $ _amount s)
+    fill 15 (text $ _stockLabel s) <+>
+    fill 6 (text $ printf "%.2f€" (fromIntegral (_stockPrice s) / 100 :: Float)) <+>
+    fill 5 (int $ _stockAmount s)
     ) ss
 
 getPrettyPrompt :: Storage -> IO String
@@ -35,7 +37,7 @@ getPrettyPrompt storage = do
   let currentUser = _currentUser storage
   isEmptyMVar currentUser >>= \case
     True -> pure "bas % "
-    False -> readMVar currentUser >>= \u -> pure $ boldBlueText (_username u) ++ "@bas % "
+    False -> readMVar currentUser >>= \u -> pure $ boldBlueText (_userName u) ++ "@bas % "
 
 boldBlueText :: String -> String
 boldBlueText = show . bold . blue . text
@@ -56,7 +58,7 @@ printPurchases :: Storage -> Int -> IO ()
 printPurchases storage limit = do
   t <- _fetchPurchases storage 0 1
   when (null t) (print $ red (text "Sorry, you haven't bought anything yet!"))
-  unless (null t) printHeader
+  unless (null t) printPurchasesHeader
   printPurchases' 0
   where
     printPurchases' curOffset = _fetchPurchases storage curOffset limit >>= \case
@@ -65,8 +67,32 @@ printPurchases storage limit = do
         prettyPrintPurchases ps
         getCharHidden (printPurchases' (curOffset + 1))
 
-printHeader :: IO ()
-printHeader =
+
+printPayments :: Storage -> Int -> IO ()
+printPayments storage limit = do
+  let mUser = _currentUser storage
+  t <- _fetchPayments storage mUser 0 1
+  when (null t) (print $ red (text "Sorry, you haven't paid anything yet!"))
+  unless (null t) printPaymentsHeader
+  printPayments' 0
+  where
+    printPayments' curOffset = _fetchPayments storage (_currentUser storage) curOffset limit >>= \case
+        []        -> pure ()
+        ps -> do
+          prettyPrintPayments ps
+          getCharHidden (printPayments' (curOffset + 1))
+
+printPaymentsHeader :: IO ()
+printPaymentsHeader =
+  print
+    $   bold
+    $   black
+    $   ondullwhite
+    $   fill 23 (text "Date")
+    <+> fill 6  (text "Amount")
+
+printPurchasesHeader :: IO ()
+printPurchasesHeader =
   print
     $   bold
     $   black
@@ -75,12 +101,20 @@ printHeader =
     <+> fill 6  (text "Price")
     <+> fill 23 (text "Date")
 
+prettyPrintPayments :: [Payment] -> IO ()
+prettyPrintPayments ps = print $ vcat $ fmap
+  ( \p ->
+    fill 23 (text $ show $ _paymentPaidAt p) <+>
+    fill 6  (text $ printf "%.2f€" (fromIntegral (_paymentAmount p) / 100 :: Float))
+  )
+  ps
+
 prettyPrintPurchases :: [Purchase] -> IO ()
 prettyPrintPurchases ps = print $ vcat $ fmap
   ( \p ->
-    fill 15 (text $ _stockLabel p) <+>
-    fill 6  (text $ printf "%.2f€" (fromIntegral (_sPrice p) / 100 :: Float)) <+>
-    fill 23 (text $ show $ _boughtAt p)
+    fill 15 (text $ _purchaseStockLabel p) <+>
+    fill 6  (text $ printf "%.2f€" (fromIntegral (_purchasePrice p) / 100 :: Float)) <+>
+    fill 23 (text $ show $ _purchaseBoughtAt p)
   )
   ps
 

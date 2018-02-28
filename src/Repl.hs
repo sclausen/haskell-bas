@@ -32,7 +32,7 @@ makeSettings = pure $ (defaultSettings :: Settings IO)
   }
 
 keywords :: [String]
-keywords = ["buy", "debts", "exit", "help", "purchases", "stocks"]
+keywords = ["buy", "debts", "exit", "help", "payments", "purchases", "stocks"]
 
 search :: String -> [Completion]
 search str = simpleCompletion <$> filter (str `isPrefixOf`) keywords
@@ -43,6 +43,7 @@ process s storage
   | s == "buy"                      = buy storage
   | s == "help"                     = liftIO $ putStrLn $ "commands: " ++ unwords keywords
   | s `elem` ["stocks", "ls", "ll"] = liftIO $ stocks storage
+  | s == "payments"                 = liftIO $ payments storage
   | s == "purchases"                = liftIO $ purchases storage
   | s == "debts"                    = liftIO $ debts storage
   | s `elem` ["q", "quit", "exit"]  = liftIO exitSuccess
@@ -61,13 +62,19 @@ debts storage = do
   let currentUser = _currentUser storage
   isEmptyMVar currentUser >>= \case
     True -> putStrLn (errorText "You're not logged in")
-    False -> readMVar currentUser >>= \u-> putStrLn $ prettyDebts (_debts u == 0) $ printf "%.2f€" (fromIntegral (_debts u) / 100 :: Float)
+    False -> readMVar currentUser >>= \u-> putStrLn $ prettyDebts (_userDebts u == 0) $ printf "%.2f€" (fromIntegral (_userDebts u) / 100 :: Float)
 
 purchases :: Storage -> IO ()
 purchases storage =
   isEmptyMVar (_currentUser storage) >>= \case
     True -> putStrLn (errorText "You're not logged in")
     False -> printPurchases storage 10
+
+payments :: Storage -> IO ()
+payments storage =
+  isEmptyMVar (_currentUser storage) >>= \case
+    True -> putStrLn (errorText "You're not logged in")
+    False -> printPayments storage 10
 
 stocks :: Storage -> IO ()
 stocks storage = prettyPrintStocks =<< _fetchStocks storage
@@ -86,9 +93,9 @@ buy storage =
             Just stockId -> _decAndFetchStock storage stockId >>= \case
               Nothing -> putStrLn (errorText $ "No Stock exists under the StockId " ++ show stockId :: String)
               Just stock -> do
-                _incUserDebts storage (_price stock)
+                _incUserDebts storage (_stockPrice stock)
                 _addPurchase storage stockId
-                putStrLn $ successText $ "You bought one item of the stock \""++ _label stock ++ "\" for " ++ printf "%.2f€" (fromIntegral (_price stock) / 100 :: Float) ++ "."
+                putStrLn $ successText $ "You bought one item of the stock \""++ _stockLabel stock ++ "\" for " ++ printf "%.2f€" (fromIntegral (_stockPrice stock) / 100 :: Float) ++ "."
 
   where
     readStockId :: String -> Maybe StockId

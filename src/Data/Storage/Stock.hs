@@ -16,10 +16,10 @@ import           Database.SQLite.Simple
 type StockId = Int
 
 data Stock = Stock
-  { _stockId :: !StockId
-  , _label   :: String
-  , _price   :: !Int
-  , _amount  :: !Int
+  { _stockId     :: !StockId
+  , _stockLabel  :: String
+  , _stockPrice  :: !Int
+  , _stockAmount :: !Int
   } deriving (Show)
 
 instance FromRow Stock where

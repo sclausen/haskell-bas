@@ -15,12 +15,12 @@ import           Database.SQLite.Simple
 type PurchaseId = Int
 
 data Purchase = Purchase
-  { _purchaseId :: !PurchaseId
-  , _pUserId    :: !UserId
-  , _pStockId   :: !StockId
-  , _boughtAt   :: !UTCTime
-  , _sPrice     :: !Int
-  , _stockLabel :: String
+  { _purchaseId         :: !PurchaseId
+  , _purchaseUserId     :: !UserId
+  , _purchaseStockId    :: !StockId
+  , _purchaseBoughtAt   :: !UTCTime
+  , _purchasePrice      :: !Int
+  , _purchaseStockLabel :: String
   } deriving (Show)
 
 instance FromRow Purchase where
