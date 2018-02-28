@@ -35,18 +35,19 @@ makeSettings mUser = do
     }
 
 keywords :: Bool -> [String]
-keywords isAdmin = sort $ ["buy", "debts", "exit", "help", "payments", "purchases", "stocks"] ++ ["pay" | isAdmin]
+keywords isAdmin = sort $ ["buy", "debts", "exit", "help", "payments", "purchases", "stocks"] ++ if isAdmin then ["pay", "users"] else []
 
 search :: Bool -> String -> [Completion]
 search isAdmin str = simpleCompletion <$> filter (str `isPrefixOf`) (keywords isAdmin)
 
 process :: String -> Storage -> Repl ()
 process s storage
-  | s == "" = return ()
+  | s == ""                         = return ()
   | s == "buy"                      = buy storage
   | s == "help"                     = showHelp
   | s `elem` ["stocks", "ls", "ll"] = liftIO $ stocks storage
   | s == "pay"                      = startPay
+  | s == "users"                    = showUsers
   | s == "payments"                 = liftIO $ payments storage
   | s == "purchases"                = liftIO $ purchases storage
   | s == "debts"                    = liftIO $ debts storage
@@ -56,6 +57,9 @@ process s storage
       startPay = do
         currentUser <- liftIO $ readMVar (_currentUser storage)
         if _userIsAdmin currentUser then pay storage else showHelp
+      showUsers = do
+        currentUser <- liftIO $ readMVar (_currentUser storage)
+        if _userIsAdmin currentUser then liftIO $ users storage else showHelp
       showHelp = do
         currentUser <- liftIO $ readMVar (_currentUser storage)
         liftIO $ putStrLn $ "commands: " ++ unwords (keywords (_userIsAdmin currentUser))
