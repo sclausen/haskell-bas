@@ -23,10 +23,12 @@ data Storage = Storage
   , _fetchPurchases   :: Int -> Int -> IO [Purchase]
   , _fetchStock       :: StockId -> IO (Maybe Stock)
   , _fetchStocks      :: IO [Stock]
-  , _fetchUser        :: String -> IO (Maybe User)
-  , _incUserDebts     :: Int -> IO ()
-  , _addPayment       :: MVar User -> Int -> IO ()
-  , _fetchPayments    :: MVar User -> Int -> Int -> IO [Payment]
+  , _fetchUserByName  :: String -> IO (Maybe User)
+  , _fetchUser        :: UserId -> IO (Maybe User)
+  , _fetchUsers       :: IO [User]
+  , _incUserDebts     :: UserId -> Int -> IO ()
+  , _addPayment       :: UserId -> Int -> IO ()
+  , _fetchPayments    :: UserId -> Int -> Int -> IO [Payment]
   }
 
 newStorage :: IO Storage
@@ -35,7 +37,7 @@ newStorage = do
   initialize conn
   mVarConn <- newMVar conn
   username <- getEnv "BAS_USER"
-  fetchUser mVarConn username >>= \case
+  fetchUserByName mVarConn username >>= \case
     Just user -> do
       currentUser <- newMVar user
       pure Storage
@@ -46,8 +48,10 @@ newStorage = do
         , _fetchPurchases = fetchPurchases mVarConn currentUser
         , _fetchStock = fetchStock mVarConn
         , _fetchStocks = fetchStocks mVarConn
+        , _fetchUsers = fetchUsers mVarConn
+        , _fetchUserByName = fetchUserByName mVarConn
         , _fetchUser = fetchUser mVarConn
-        , _incUserDebts = incUserDebts mVarConn currentUser
+        , _incUserDebts = incUserDebts mVarConn
         , _addPayment = addPayment mVarConn
         , _fetchPayments = fetchPayments mVarConn
         }
@@ -60,7 +64,7 @@ initialize conn = do
    createPurchaseTable
    createPaymentTable
     where
-      createUserTable     = execute_ conn "CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY, username TEXT NOT NULL UNIQUE, debts INTEGER NOT NULL)"
+      createUserTable     = execute_ conn "CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY, username TEXT NOT NULL UNIQUE, debts INTEGER NOT NULL, isAdmin INTEGER NOT NULL)"
       createStockTable    = execute_ conn "CREATE TABLE IF NOT EXISTS stock (id INTEGER PRIMARY KEY, label TEXT NOT NULL UNIQUE, price INTEGER NOT NULL, amount INTEGER NOT NULL)"
       createPurchaseTable = execute_ conn "CREATE TABLE IF NOT EXISTS purchase (id INTEGER PRIMARY KEY, userId INTEGER NOT NULL, stockId INTEGER NOT NULL, boughtAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(userId) REFERENCES user (id) ON DELETE CASCADE, FOREIGN KEY(stockId) REFERENCES stock (id) ON DELETE CASCADE)"
       createPaymentTable  = execute_ conn "CREATE TABLE IF NOT EXISTS payment (id INTEGER PRIMARY KEY, userId INTEGER NOT NULL, paidAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, amount INTEGER NOT NULL, FOREIGN KEY(userId) REFERENCES user (id) ON DELETE CASCADE)"

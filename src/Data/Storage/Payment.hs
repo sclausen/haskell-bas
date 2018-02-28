@@ -22,12 +22,8 @@ data Payment = Payment
 instance FromRow Payment where
   fromRow = Payment <$> field <*> field <*> field <*> field
 
-addPayment :: MVar Connection -> MVar User -> Int -> IO ()
-addPayment mConn mUser amount = do
-  user <- readMVar mUser
-  withMVar mConn $ \conn -> execute conn "INSERT INTO payment (userId, amount) VALUES (?, ?)" (_userId user, amount)
+addPayment :: MVar Connection -> UserId -> Int -> IO ()
+addPayment mConn userId amount = withMVar mConn $ \conn -> execute conn "INSERT INTO payment (userId, amount) VALUES (?, ?)" (userId, amount)
 
-fetchPayments :: MVar Connection -> MVar User -> Int -> Int -> IO [Payment]
-fetchPayments mConn mUser offset limit = do
-  user <- readMVar mUser
-  withMVar mConn $ \conn -> query conn "SELECT id, userId, paidAt, amount FROM payment WHERE userId = ? ORDER BY paidAt DESC LIMIT ?, ?" (_userId user, offset, limit)
+fetchPayments :: MVar Connection -> UserId -> Int -> Int -> IO [Payment]
+fetchPayments mConn userId offset limit = withMVar mConn $ \conn -> query conn "SELECT id, userId, paidAt, amount FROM payment WHERE userId = ? ORDER BY paidAt DESC LIMIT ?, ?" (userId, offset, limit)

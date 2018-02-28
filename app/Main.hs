@@ -12,5 +12,5 @@ main :: IO ()
 main = do
   putStrLn $ makeAnsiText $ "bas " ++ showVersion version
   storage <- newStorage
-  settings <- makeSettings
+  settings <- makeSettings (_currentUser storage)
   runInputT settings (repl storage)

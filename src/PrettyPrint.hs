@@ -2,8 +2,9 @@
 module PrettyPrint (
     getPrettyPrompt
   , prettyDebts
-  , prettyUsername
   , prettyPrintStocks
+  , prettyPrintUsers
+  , prettyUsername
   , printPayments
   , printPurchases
   , errorText
@@ -32,15 +33,30 @@ prettyPrintStocks ss = do
     fill 5 (int $ _stockAmount s)
     ) ss
 
+prettyPrintUsers :: [User] -> IO ()
+prettyPrintUsers us = do
+  print $ bold $ black $ ondullwhite $ fill 5 (text "ID") <+> fill 15 (text "Username") <+> fill 6 (text "Debts") <+> fill 5 (text "Admin")
+  print $ vcat $ fmap (\u ->
+    fill 5 (int $ _userId u) <+>
+    fill 15 (text $ _userName u) <+>
+    fill 6 (text $ printf "%.2f€" (fromIntegral (_userDebts u) / 100 :: Float)) <+>
+    fill 5 (text $ if _userIsAdmin u then "yes" else "no")
+    ) us
+
 getPrettyPrompt :: Storage -> IO String
 getPrettyPrompt storage = do
   let currentUser = _currentUser storage
   isEmptyMVar currentUser >>= \case
     True -> pure "bas % "
-    False -> readMVar currentUser >>= \u -> pure $ boldBlueText (_userName u) ++ "@bas % "
+    False -> readMVar currentUser >>= \u -> pure $ if _userIsAdmin u
+      then boldGreenText (_userName u) ++ "@bas % "
+      else boldBlueText (_userName u) ++ "@bas % "
 
 boldBlueText :: String -> String
 boldBlueText = show . bold . blue . text
+
+boldGreenText :: String -> String
+boldGreenText = show . bold . green . text
 
 prettyUsername :: String -> String
 prettyUsername = show . bold . blue . text
@@ -70,14 +86,16 @@ printPurchases storage limit = do
 
 printPayments :: Storage -> Int -> IO ()
 printPayments storage limit = do
-  let mUser = _currentUser storage
-  t <- _fetchPayments storage mUser 0 1
+  user <- readMVar $ _currentUser storage
+  t <- _fetchPayments storage (_userId user) 0 1
   when (null t) (print $ red (text "Sorry, you haven't paid anything yet!"))
   unless (null t) printPaymentsHeader
   printPayments' 0
   where
-    printPayments' curOffset = _fetchPayments storage (_currentUser storage) curOffset limit >>= \case
-        []        -> pure ()
+    printPayments' curOffset = do
+      user <- readMVar $ _currentUser storage
+      _fetchPayments storage (_userId user) curOffset limit >>= \case
+        [] -> pure ()
         ps -> do
           prettyPrintPayments ps
           getCharHidden (printPayments' (curOffset + 1))
