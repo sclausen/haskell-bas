@@ -129,7 +129,7 @@ startUpdateUser storage = do
           Nothing -> liftIO exitSuccess
           Just isAdminInput -> liftIO $ _updateUser storage userId (yToBool isAdminInput) >>= \case
             False -> putStrLn (errorText $ "No stock exists under the StockId " ++ show userId :: String)
-            True -> putStrLn (successText $ "The user has been updated!" :: String)
+            True -> putStrLn (successText "The user has been updated!" :: String)
 
 startUpdateStock :: Storage -> Repl ()
 startUpdateStock storage = do

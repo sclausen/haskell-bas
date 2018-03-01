@@ -17,23 +17,23 @@ import           System.Exit
 
 data Storage = Storage
   { _conn             :: MVar Connection
-  , _currentUser      :: MVar User
-  , _addPurchase      :: StockId -> IO ()
-  , _addUser          :: User -> IO Bool
-  , _deleteUser       :: Username -> IO Bool
   , _addStock         :: Stock -> IO ()
   , _updateStock      :: StockId -> Int -> IO Bool
-  , _updateUser       :: UserId -> Bool -> IO Bool
   , _decAndFetchStock :: StockId -> IO (Maybe Stock)
-  , _fetchPurchases   :: Int -> Int -> IO [Purchase]
   , _fetchStock       :: StockId -> IO (Maybe Stock)
   , _fetchStocks      :: IO [Stock]
+  , _currentUser      :: MVar User
+  , _addUser          :: User -> IO Bool
+  , _updateUser       :: UserId -> Bool -> IO Bool
+  , _deleteUser       :: Username -> IO Bool
   , _fetchUserByName  :: String -> IO (Maybe User)
   , _fetchUser        :: UserId -> IO (Maybe User)
   , _fetchUsers       :: IO [User]
   , _incUserDebts     :: UserId -> Int -> IO ()
   , _addPayment       :: UserId -> Int -> IO ()
   , _fetchPayments    :: UserId -> Int -> Int -> IO [Payment]
+  , _addPurchase      :: StockId -> IO ()
+  , _fetchPurchases   :: Int -> Int -> IO [Purchase]
   }
 
 newStorage :: IO Storage
@@ -47,23 +47,23 @@ newStorage = do
       currentUser <- newMVar user
       pure Storage
         { _conn = mVarConn
-        , _addPurchase = addPurchase mVarConn currentUser
         , _addStock = addStock mVarConn
         , _updateStock = updateStock mVarConn
-        , _updateUser = updateUser mVarConn
-        , _addUser = addUser mVarConn
-        , _deleteUser = deleteUser mVarConn
-        , _currentUser = currentUser
         , _decAndFetchStock = decAndFetchStock mVarConn
-        , _fetchPurchases = fetchPurchases mVarConn currentUser
         , _fetchStock = fetchStock mVarConn
         , _fetchStocks = fetchStocks mVarConn
+        , _currentUser = currentUser
+        , _addUser = addUser mVarConn
+        , _updateUser = updateUser mVarConn
+        , _deleteUser = deleteUser mVarConn
         , _fetchUsers = fetchUsers mVarConn
         , _fetchUserByName = fetchUserByName mVarConn
         , _fetchUser = fetchUser mVarConn
         , _incUserDebts = incUserDebts mVarConn
         , _addPayment = addPayment mVarConn
         , _fetchPayments = fetchPayments mVarConn
+        , _addPurchase = addPurchase mVarConn currentUser
+        , _fetchPurchases = fetchPurchases mVarConn currentUser
         }
     _ -> exitFailure
 
