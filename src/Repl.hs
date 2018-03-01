@@ -52,7 +52,7 @@ processAdmin s storage
   | s == "pay"           = pay storage
   | s == "users"         = liftIO $ users storage
   | s == "users add"     = startAddUser storage
-  | s == "users update"     = startUpdateUser storage
+  | s == "users update"  = startUpdateUser storage
   | s == "users delete"  = startDeleteUser storage
   | s == "stocks add"    = startAddStock storage
   | s == "stocks update" = startUpdateStock storage
