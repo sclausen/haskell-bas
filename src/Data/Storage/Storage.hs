@@ -19,6 +19,11 @@ data Storage = Storage
   { _conn             :: MVar Connection
   , _currentUser      :: MVar User
   , _addPurchase      :: StockId -> IO ()
+  , _addUser          :: User -> IO Bool
+  , _deleteUser       :: Username -> IO Bool
+  , _addStock         :: Stock -> IO ()
+  , _updateStock      :: StockId -> Int -> IO Bool
+  , _updateUser       :: UserId -> Bool -> IO Bool
   , _decAndFetchStock :: StockId -> IO (Maybe Stock)
   , _fetchPurchases   :: Int -> Int -> IO [Purchase]
   , _fetchStock       :: StockId -> IO (Maybe Stock)
@@ -43,6 +48,11 @@ newStorage = do
       pure Storage
         { _conn = mVarConn
         , _addPurchase = addPurchase mVarConn currentUser
+        , _addStock = addStock mVarConn
+        , _updateStock = updateStock mVarConn
+        , _updateUser = updateUser mVarConn
+        , _addUser = addUser mVarConn
+        , _deleteUser = deleteUser mVarConn
         , _currentUser = currentUser
         , _decAndFetchStock = decAndFetchStock mVarConn
         , _fetchPurchases = fetchPurchases mVarConn currentUser
@@ -64,7 +74,7 @@ initialize conn = do
    createPurchaseTable
    createPaymentTable
     where
-      createUserTable     = execute_ conn "CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY, username TEXT NOT NULL UNIQUE, debts INTEGER NOT NULL, isAdmin INTEGER NOT NULL)"
+      createUserTable     = execute_ conn "CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY, username TEXT NOT NULL UNIQUE, debts INTEGER NOT NULL DEFAULT 0, isAdmin INTEGER NOT NULL)"
       createStockTable    = execute_ conn "CREATE TABLE IF NOT EXISTS stock (id INTEGER PRIMARY KEY, label TEXT NOT NULL UNIQUE, price INTEGER NOT NULL, amount INTEGER NOT NULL)"
       createPurchaseTable = execute_ conn "CREATE TABLE IF NOT EXISTS purchase (id INTEGER PRIMARY KEY, userId INTEGER NOT NULL, stockId INTEGER NOT NULL, boughtAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(userId) REFERENCES user (id) ON DELETE CASCADE, FOREIGN KEY(stockId) REFERENCES stock (id) ON DELETE CASCADE)"
       createPaymentTable  = execute_ conn "CREATE TABLE IF NOT EXISTS payment (id INTEGER PRIMARY KEY, userId INTEGER NOT NULL, paidAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, amount INTEGER NOT NULL, FOREIGN KEY(userId) REFERENCES user (id) ON DELETE CASCADE)"
