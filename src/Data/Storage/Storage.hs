@@ -5,7 +5,7 @@ module Data.Storage.Storage (
     Storage (..)
   , newStorage
 ) where
-
+-- Testst
 import           Control.Concurrent.MVar
 import           Data.Storage.Payment
 import           Data.Storage.Purchase
@@ -75,6 +75,6 @@ initialize conn = do
    createPaymentTable
     where
       createUserTable     = execute_ conn "CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY, username TEXT NOT NULL UNIQUE, debts INTEGER NOT NULL DEFAULT 0, isAdmin INTEGER NOT NULL)"
-      createStockTable    = execute_ conn "CREATE TABLE IF NOT EXISTS stock (id INTEGER PRIMARY KEY, label TEXT NOT NULL UNIQUE, price INTEGER NOT NULL, amount INTEGER NOT NULL)"
+      createStockTable    = execute_ conn "CREATE TABLE IF NOT EXISTS stock (id INTEGER PRIMARY KEY, ownerId INTEGER NOT NULL , label TEXT NOT NULL UNIQUE, price INTEGER NOT NULL, amount INTEGER NOT NULL, FOREIGN KEY(ownerId) REFERENCES user (id) ON DELETE CASCADE)"
       createPurchaseTable = execute_ conn "CREATE TABLE IF NOT EXISTS purchase (id INTEGER PRIMARY KEY, userId INTEGER NOT NULL, stockId INTEGER NOT NULL, boughtAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(userId) REFERENCES user (id) ON DELETE CASCADE, FOREIGN KEY(stockId) REFERENCES stock (id) ON DELETE CASCADE)"
       createPaymentTable  = execute_ conn "CREATE TABLE IF NOT EXISTS payment (id INTEGER PRIMARY KEY, userId INTEGER NOT NULL, paidAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, amount INTEGER NOT NULL, FOREIGN KEY(userId) REFERENCES user (id) ON DELETE CASCADE)"
