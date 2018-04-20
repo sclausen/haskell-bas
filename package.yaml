@@ -17,18 +17,16 @@ extra-source-files:
 # To avoid duplicated efforts in documentation and dealing with the
 # complications of embedding Haddock markup inside cabal files, it is
 # common to point users to the README.md file.
-description:         Please see the README on Github at <https://github.com/sclausen/haskell-bas#readme>
+description: Please see the README on Github at <https://github.com/sclausen/haskell-bas#readme>
 
 dependencies:
 - base >= 4.7 && < 5
-- ansi-wl-pprint
-- clock
-- either >= 5
-- haskeline
-- mtl
-- directory
-- sqlite-simple
-- time
+- brick
+- vty
+- text
+- microlens >= 0.3.0.0
+- microlens-th
+- microlens-mtl
 library:
   source-dirs: src
   ghc-options:
