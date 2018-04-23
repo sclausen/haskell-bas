@@ -2,87 +2,104 @@
 {-# LANGUAGE TemplateHaskell   #-}
 module Main where
 
-import           Data.Monoid          ((<>))
-import qualified Data.Text            as T
-import           Lens.Micro           ((^.))
+import           Data.Monoid                ((<>))
+import qualified Data.Text                  as T
+import           Lens.Micro                 ((^.))
 import           Lens.Micro.TH
 
 import           Brick
-import           Brick.Focus          (focusGetCurrent, focusRingCursor)
-import           Brick.Forms          (Form, allFieldsValid, checkboxField,
-                                       editPasswordField, editShowableField,
-                                       editTextField, focusedFormInputAttr,
-                                       formFocus, formState, handleFormEvent,
-                                       invalidFields, invalidFormInputAttr,
-                                       newForm, radioField, renderForm,
-                                       setFieldValid, (@@=))
-import qualified Brick.Widgets.Border as B
-import qualified Brick.Widgets.Center as C
-import qualified Brick.Widgets.Edit   as E
-import qualified Graphics.Vty         as V
+import           Brick.Focus                (focusGetCurrent, focusRingCursor)
+import           Brick.Forms                (Form, allFieldsValid,
+                                             checkboxField, editPasswordField,
+                                             editShowableField, editTextField,
+                                             focusedFormInputAttr, formFocus,
+                                             formState, handleFormEvent,
+                                             invalidFields,
+                                             invalidFormInputAttr, newForm,
+                                             radioField, renderForm,
+                                             setFieldValid, (@@=))
+import qualified Brick.Widgets.Border       as B
+import qualified Brick.Widgets.Border.Style as BS
+import qualified Brick.Widgets.Center       as C
+import qualified Brick.Widgets.Core         as C
+import qualified Brick.Widgets.Edit         as E
+import qualified Graphics.Vty               as V
+
+type ID = Int
 
 data Name = NameField
-          | AgeField
-          | BikeField
+          | PriceField
+          | IsAdminField
           | HandedField
           | PasswordField
           | LeftHandField
           | RightHandField
+          | RadioOption ID
           | AmbiField
-          | AddressField
+          | DesscriptionField
           deriving (Eq, Ord, Show)
 
-data Handedness = LeftHanded | RightHanded | Ambidextrous
-                deriving (Show, Eq)
-
-data UserInfo =
-    UserInfo { _name      :: T.Text
-             , _age       :: Int
-             , _address   :: T.Text
-             , _ridesBike :: Bool
-             , _handed    :: Handedness
-             , _password  :: T.Text
+data StockInfo =
+    StockInfo { _name       :: T.Text
+             , _price       :: Int
+             , _description :: T.Text
+             , _isAdmin     :: Bool
+             , _stock       :: Int
+             , _password    :: T.Text
              }
              deriving (Show)
 
-makeLenses ''UserInfo
+makeLenses ''StockInfo
 
 -- This form is covered in the Brick User Guide; see the "Input Forms"
 -- section.
-mkForm :: UserInfo -> Form UserInfo e Name
+mkForm :: StockInfo -> Form StockInfo e Name
 mkForm =
     let label s w = padBottom (Pad 1) $
-                    (vLimit 1 $ hLimit 15 $ str s <+> fill ' ') <+> w
-    in newForm [ label "Name" @@=
+                    (vLimit 1 $ hLimit 15 $ str s <+> fill ' ') w
+    in newForm [ label "Search" @@=
                    editTextField name NameField (Just 1)
-               , label "Address" @@=
-                 B.borderWithLabel (str "Mailing") @@=
-                   editTextField address AddressField (Just 3)
-               , label "Age" @@=
-                   editShowableField age AgeField
-               , label "Password" @@=
-                   editPasswordField password PasswordField
-               , label "Dominant hand" @@=
-                   radioField handed [ (LeftHanded, LeftHandField, "Left")
-                                     , (RightHanded, RightHandField, "Right")
-                                     , (Ambidextrous, AmbiField, "Both")
+               , label "Description" @@=
+                 B.border @@=
+                   editTextField description DesscriptionField (Just 3)
+               , label "Price" @@=
+                   editShowableField price PriceField
+               , label "Stock to buy" @@=
+                   radioField stock [  (1, RadioOption 1, "Club Mate")
+                                     , (2, RadioOption 2, "Kong")
+                                     , (3, RadioOption 3, "Flora Power")
                                      ]
                , label "" @@=
-                   checkboxField ridesBike BikeField "Do you ride a bicycle?"
+                   checkboxField isAdmin IsAdminField "Is Admin?"
                ]
 
 theMap :: AttrMap
 theMap = attrMap V.defAttr
   [ (E.editAttr, V.white `on` V.black)
-  , (E.editFocusedAttr, V.black `on` V.yellow)
+  , (E.editFocusedAttr, V.black `on` V.white)
   , (invalidFormInputAttr, V.white `on` V.red)
-  , (focusedFormInputAttr, V.black `on` V.yellow)
+  , (focusedFormInputAttr, V.black `on` V.white)
+  , ("redText", fg V.red)
+  , ("greenText", fg V.green)
   ]
 
-draw :: Form UserInfo e Name -> [Widget Name]
-draw f = [C.vCenter $ C.hCenter form <=> C.hCenter help]
+draw :: Form StockInfo e Name -> [Widget Name]
+draw f = [
+          C.center $ C.joinBorders $ vLimit 30 $ hLimit 80 $
+          B.borderWithLabel (padRight Max $ str " Beverage Accounting System " <+> B.hBorder) $
+          vBox [
+            hBox [ padLeft Max $ (withDefAttr "greenText" $ str "sclausen") <+> str " - " <+> (withDefAttr "redText" $ str "10.30€") ]
+            --  <+> withDefAttr "redText" $ str "€ 10.30"
+          , B.hBorder
+          , hBox [
+              vBox [ hLimit 15 $ padRight Max $ str "Stocks\nDebts", hLimit 15 B.hBorder, hLimit 15 $ padBottom Max $ str "Admin\n Users\n Stocks" ]
+            , B.vBorder
+            , vBox [ padBottom Max form ]
+                 ]
+              ]
+          ]
     where
-        form = B.border $ padTop (Pad 1) $ hLimit 50 $ renderForm f
+        form = renderForm f
         help = padTop (Pad 1) $ B.borderWithLabel (str "Help") body
         body = str $ "- Name is free-form text\n" <>
                      "- Age must be an integer (try entering an\n" <>
@@ -91,7 +108,7 @@ draw f = [C.vCenter $ C.hCenter form <=> C.hCenter help]
                      "- The last option is a checkbox\n" <>
                      "- Enter/Esc quit, mouse interacts with fields"
 
-app :: App (Form UserInfo e Name) e Name
+app :: App (Form StockInfo e Name) e Name
 app =
     App { appDraw = draw
         , appHandleEvent = \s ev ->
@@ -100,13 +117,13 @@ app =
                 VtyEvent (V.EvKey V.KEsc [])   -> halt s
                 -- Enter quits only when we aren't in the multi-line editor.
                 VtyEvent (V.EvKey V.KEnter [])
-                    | focusGetCurrent (formFocus s) /= Just AddressField -> halt s
+                    | focusGetCurrent (formFocus s) /= Just DesscriptionField -> halt s
                 _ -> do
                     s' <- handleFormEvent ev s
 
                     -- Example of external validation:
-                    -- Require age field to contain a value that is at least 18.
-                    continue $ setFieldValid ((formState s')^.age >= 18) AgeField s'
+                    -- Require price field to be zero or positive.
+                    continue $ setFieldValid ((formState s')^.price >= 0) PriceField s'
 
         , appChooseCursor = focusRingCursor formFocus
         , appStartEvent = return
@@ -120,20 +137,20 @@ main = do
           V.setMode (V.outputIface v) V.Mouse True
           return v
 
-        initialUserInfo = UserInfo { _name = ""
-                                   , _address = ""
-                                   , _age = 0
-                                   , _handed = RightHanded
-                                   , _ridesBike = False
+        initialStockInfo = StockInfo { _name = ""
+                                   , _description = ""
+                                   , _price = 0
+                                   , _stock = 1
+                                   , _isAdmin = False
                                    , _password = ""
                                    }
-        f = setFieldValid False AgeField $
-            mkForm initialUserInfo
+        f = setFieldValid False PriceField $
+            mkForm initialStockInfo
 
     f' <- customMain buildVty Nothing app f
 
     putStrLn "The starting form state was:"
-    print initialUserInfo
+    print initialStockInfo
 
     putStrLn "The final form state was:"
     print $ formState f'
@@ -141,3 +158,18 @@ main = do
     if allFieldsValid f'
        then putStrLn "The final form inputs were valid."
        else putStrLn $ "The final form had invalid inputs: " <> show (invalidFields f')
+
+doubleHorizontal :: BS.BorderStyle
+doubleHorizontal = BS.BorderStyle
+    { BS.bsCornerTL = '╒'
+    , BS.bsCornerTR = '╕'
+    , BS.bsCornerBR = '╛'
+    , BS.bsCornerBL = '╘'
+    , BS.bsIntersectL = '╞'
+    , BS.bsIntersectR = '╡'
+    , BS.bsIntersectT = '╤'
+    , BS.bsIntersectB = '╧'
+    , BS.bsIntersectFull = '╪'
+    , BS.bsHorizontal = '═'
+    , BS.bsVertical = '│'
+    }
