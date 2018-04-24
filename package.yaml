@@ -25,13 +25,20 @@ ghc-options:
 
 dependencies:
 - base >= 4.7 && < 5
+- ansi-wl-pprint
 - brick
-- vty
-- text
+- clock
+- directory
+- either >= 5
 - microlens >= 0.3.0.0
-- microlens-th
 - microlens-mtl
+- microlens-th
+- mtl
+- sqlite-simple
+- text
+- time
 - vector
+- vty
 library:
   source-dirs: src
 
