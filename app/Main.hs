@@ -40,6 +40,7 @@ data Name = NameField
           | PriceField
           | IsAdminField
           | HandedField
+          | MenuList
           | PasswordField
           | LeftHandField
           | RightHandField
@@ -69,6 +70,7 @@ data AppState = AppState
   , _user         :: User
   , _stocks       :: [Stock]
   , _buyStockForm :: StockForm
+  , _menuItems    :: L.List Name MenuItem
   }
   -- deriving (Show)
 
@@ -79,14 +81,12 @@ instance Show AppState where
             , " , _user = " <> show (_user e)
             , " , _stocks = " <> show (_stocks e)
             , " , _buyStockForm = " <> show (formState $ _buyStockForm e)
+            , " , _menuItems = " <> show (_menuItems e)
             , "}"
             ]
 
-
 concat <$> mapM makeLenses [''StockInfo, ''AppState, ''User, ''Stock]
 
--- This form is covered in the Brick User Guide; see the "Input Forms"
--- section.
 mkForm :: StockInfo -> Form StockInfo () Name
 mkForm stockInfo =
     let label s w = padBottom (Pad 1) $
@@ -95,14 +95,8 @@ mkForm stockInfo =
                    radioField selectedStock (makeRadioTuples (stockInfo ^. availableStocks))
                ] stockInfo
 
-
 makeRadioTuples :: [Stock] -> [(Int, Name, T.Text)]
 makeRadioTuples xs = (\(i,s)-> (i, RadioOption i, _stockLabel s)) <$> zip ([0..] :: [Int]) xs
-
-  -- [ (1, RadioOption 1, "Club Mate")
-  --                                           , (2, RadioOption 2, "Kong")
-  --                                           , (3, RadioOption 3, "Flora Power")
-  --                                           ]
 
 theMap :: A.AttrMap
 theMap = attrMap V.defAttr
@@ -113,47 +107,13 @@ theMap = attrMap V.defAttr
   , ("redText",            fg V.red)
   , ("greenText",          fg V.green)
   , ("normalText",         fg V.white)
-  , (customAttr,           fg V.cyan)
+  , (customAttr,           fg V.brightBlack)
   ]
-
-drawUIS :: AppState -> [Widget Name]
-drawUIS appState = [
-          C.center $ C.joinBorders $ vLimit 30 $ hLimit 80 $
-          B.borderWithLabel (padRight Max $ str " Beverage Accounting System " <+> B.hBorder) $
-          vBox [
-            hBox [ padLeft Max $ (withDefAttr "greenText" $ str "sclausen") <+> str " - " <+> (withDefAttr "redText" $ str "10.30€") ]
-            --  <+> withDefAttr "redText" $ str "€ 10.30"
-          , B.hBorder
-          , hBox [
-              vBox [ hLimit 15 $ padRight Max $ str "test" ]
-              --  L.renderList listDrawElement True l
-            , B.vBorder
-            , vBox [ padBottom Max $ str "Test" ]
-                 ]
-              ]
-          ]
-    where
-        -- form = renderForm appState
 
 app :: App AppState () Name
 app =
     App { appDraw = drawUI
         , appHandleEvent = handleEvent
-        -- , appHandleEvent = \s ev ->
-        --     case ev of
-        --         VtyEvent V.EvResize {}     -> continue s
-        --         VtyEvent (V.EvKey V.KEsc []) -> halt s
-        --         -- Enter quits only when we aren't in the multi-line editor.
-        --         VtyEvent (V.EvKey V.KEnter [])
-        --             | focusGetCurrent (formFocus s) /= Just DesscriptionField -> halt s
-        --         _ -> do
-        --             s' <- handleFormEvent ev s
-
-        --             -- Example of external validation:
-        --             -- Require price field to be zero or positive.
-        --             continue $ setFieldValid (formState s'^.price >= 0) PriceField s'
-
-        -- , appChooseCursor = focusRingCursor formFocus
         , appChooseCursor = neverShowCursor
         , appStartEvent = return
         , appAttrMap = const theMap
@@ -165,9 +125,12 @@ handleEvent :: AppState -> BrickEvent Name () -> EventM Name (Next AppState)
 handleEvent st (VtyEvent (V.EvKey (V.KChar 'q') [])) = halt st
 handleEvent st (VtyEvent (V.EvKey V.KEsc []))        = halt st
 -- handleEvent st _                                     = continue st
-handleEvent st e = do
-  f' <- handleFormEvent e (st ^. buyStockForm)
-  continue $ st & buyStockForm .~ f'
+-- handleEvent st e = M.continue =<< L.handleListEvent e (st ^. menuItems)
+handleEvent st e = continue =<< L.handleListEvent e (st ^. menuItems)
+-- handleEvent st e = do
+
+--   f' <- handleFormEvent e (st ^. buyStockForm)
+--   continue $ st & buyStockForm .~ f'
 -- handleEvent st e = do
 --   st' <- handleFormEvent e (st ^. buyStockForm)
 --   continue st'
@@ -187,7 +150,8 @@ drawUI appState = [
             hBox [ padLeft Max $ drawUserInfo appState ]
           , B.hBorder
           , hBox [
-              vBox [ hLimit 15 $ padRight Max $ str "test" ]
+              vBox [ hLimit 15 $ L.renderList listDrawElement True (appState ^. menuItems)]
+              -- L.renderList listDrawElement True (appState ^. menuItems)
             , B.vBorder
             , vBox [ padBottom Max $ drawBuyStock appState ]
                  ]
@@ -218,11 +182,14 @@ main = do
         stockInfo = StockInfo { _selectedStock = 0
                               , _availableStocks = stocks
                               }
+        menuItems = L.list MenuList (Vec.fromList [MenuStocks, MenuPurchases]) 1
+
         appState = AppState {
           _selectedMenu = MenuStocks
         , _storage = libStorage
         , _user = user
         , _stocks = stocks
+        , _menuItems = menuItems
         , _buyStockForm = mkForm stockInfo
         }
 
@@ -245,15 +212,12 @@ main = do
 customAttr :: A.AttrName
 customAttr = L.listSelectedAttr <> "custom"
 
-listDrawElement :: (Show a) => Bool -> a -> Widget ()
+listDrawElement :: (Show a) => Bool -> a -> Widget Name
 listDrawElement sel a =
     let selStr s = if sel
-                   then withAttr customAttr (str $ "<" <> s <> ">")
+                   then withAttr customAttr (str s)
                    else str s
-    in C.hCenter $ str "Item " <+> selStr (show a)
-
-initialState :: L.List () Char
-initialState = L.list () (Vec.fromList ['a','b','c']) 1
+    in selStr (show a)
 
 formatCurrency :: Int -> String
 formatCurrency a = printf "%.2f€" (fromIntegral a / 100 :: Float)
